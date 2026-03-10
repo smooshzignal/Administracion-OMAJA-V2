@@ -505,7 +505,7 @@ namespace Administracion_OMAJA
             using (var workbook = new XLWorkbook())
             {
                 var resumenSheet = workbook.Worksheets.Add("Resumen");
-                string mesTitulo = $"Reporte de {fechaInicio:MMMM yyyy} OMAJA";
+                string mesTitulo = string.Format(CultureInfo.CurrentCulture, "Reporte de {0:MMMM yyyy} OMAJA", fechaInicio);
                 InsertarEncabezadoMes(resumenSheet, mesTitulo, sucursal, destino);
 
                 var indicadoresCalc = ConstruirIndicadoresResumen(fechaInicio, fechaFin, sucursal, destino, datos);
@@ -529,7 +529,9 @@ namespace Administracion_OMAJA
                 tablaDatos.Theme = XLTableTheme.None;
                 tablaDatos.ShowRowStripes = false;
                 tablaDatos.ShowColumnStripes = false;
+
                 AplicarColoresFilasExcel(datosSheet, datos, startRow: 2, startCol: 1);
+                InsertarTotalColumnaExcel(datosSheet, datos, startRow: 2, startCol: 1);
                 datosSheet.Columns().AdjustToContents();
 
                 var totSheet = workbook.Worksheets.Add("Totales");
@@ -2624,7 +2626,7 @@ namespace Administracion_OMAJA
             {
                 Filter = "Archivo Excel|*.xlsx",
                 Title = "Exportar vista actual a Excel",
-                FileName = $"Reportes_OMAJA_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+                FileName = string.Format(CultureInfo.InvariantCulture, "Reportes_OMAJA_{0:yyyyMMdd_HHmm}.xlsx", DateTime.Now)
             })
             {
                 if (dialog.ShowDialog() != DialogResult.OK)
@@ -2650,10 +2652,13 @@ namespace Administracion_OMAJA
                     foreach (var rango in rangos)
                     {
                         var datosMes = ObtenerDatosFiltradosParaExport(rango.Inicio, rango.Fin);
-                        if (datosMes == null) continue;
+                        if (datosMes == null || datosMes.Rows.Count == 0)
+                        {
+                            continue;
+                        }
 
                         var ws = wb.Worksheets.Add(rango.Nombre);
-                        string tituloMes = $"Reporte Mensual OMAJA - {rango.Nombre}";
+                        string tituloMes = "Reporte Mensual OMAJA - " + rango.Nombre;
                         InsertarEncabezadoMes(ws, tituloMes, sucursal, destino);
 
                         var inds = ConstruirIndicadoresResumen(rango.Inicio, rango.Fin, sucursal, destino, datosMes);
@@ -2668,7 +2673,9 @@ namespace Administracion_OMAJA
                         tablaMes.Theme = XLTableTheme.None;
                         tablaMes.ShowRowStripes = false;
                         tablaMes.ShowColumnStripes = false;
+
                         AplicarColoresFilasExcel(ws, datosMes, startRow: dataStartRow + 1, startCol: 1);
+                        InsertarTotalColumnaExcel(ws, datosMes, startRow: dataStartRow + 1, startCol: 1);
                         ws.Columns().AdjustToContents();
 
                         var est = CalcularEstadisticasMes(datosMes);
@@ -2710,11 +2717,11 @@ namespace Administracion_OMAJA
 
                     wsTot.Cell(row, 1).Value = "TOTAL";
                     wsTot.Cell(row, 1).Style.Font.Bold = true;
-                    wsTot.Cell(row, 2).FormulaA1 = $"SUM(B2:B{row - 1})";
-                    wsTot.Cell(row, 3).FormulaA1 = $"SUM(C2:C{row - 1})";
-                    wsTot.Cell(row, 4).FormulaA1 = $"SUM(D2:D{row - 1})";
-                    wsTot.Cell(row, 5).FormulaA1 = $"SUM(E2:E{row - 1})";
-                    wsTot.Cell(row, 6).FormulaA1 = $"SUM(F2:F{row - 1})";
+                    wsTot.Cell(row, 2).FormulaA1 = string.Format(CultureInfo.InvariantCulture, "SUM(B2:B{0})", row - 1);
+                    wsTot.Cell(row, 3).FormulaA1 = string.Format(CultureInfo.InvariantCulture, "SUM(C2:C{0})", row - 1);
+                    wsTot.Cell(row, 4).FormulaA1 = string.Format(CultureInfo.InvariantCulture, "SUM(D2:D{0})", row - 1);
+                    wsTot.Cell(row, 5).FormulaA1 = string.Format(CultureInfo.InvariantCulture, "SUM(E2:E{0})", row - 1);
+                    wsTot.Cell(row, 6).FormulaA1 = string.Format(CultureInfo.InvariantCulture, "SUM(F2:F{0})", row - 1);
                     wsTot.Range(row, 1, row, 6).Style.Font.Bold = true;
                     wsTot.Columns(4, 6).Style.NumberFormat.Format = "$#,##0.00";
 
@@ -3379,6 +3386,47 @@ namespace Administracion_OMAJA
             }
         }
 
+        private void InsertarTotalColumnaExcel(IXLWorksheet ws, DataTable dt, int startRow = 2, int startCol = 1)
+        {
+            if (ws == null || dt == null || dt.Rows.Count == 0)
+            {
+                return;
+            }
+
+            string nombreColumnaTotal = ObtenerNombreColumna(dt, "Total");
+            if (string.IsNullOrWhiteSpace(nombreColumnaTotal))
+            {
+                return;
+            }
+
+            int indiceTotal = dt.Columns[nombreColumnaTotal].Ordinal;
+            int columnaTotalExcel = startCol + indiceTotal;
+            int ultimaFilaDatos = startRow + dt.Rows.Count - 1;
+            int filaSeparadora = ultimaFilaDatos + 1;
+            int filaTotal = ultimaFilaDatos + 2;
+
+            string letraColumnaTotal = XLHelper.GetColumnLetterFromNumber(columnaTotalExcel);
+
+            int columnaEtiqueta = columnaTotalExcel > startCol ? columnaTotalExcel - 1 : startCol;
+
+            ws.Cell(filaTotal, columnaEtiqueta).Value = "TOTAL";
+            ws.Cell(filaTotal, columnaTotalExcel).FormulaA1 = string.Format(
+                CultureInfo.InvariantCulture,
+                "SUM({0}{1}:{0}{2})",
+                letraColumnaTotal,
+                startRow,
+                ultimaFilaDatos);
+
+            var rangoTotal = ws.Range(filaTotal, startCol, filaTotal, startCol + dt.Columns.Count - 1);
+            rangoTotal.Style.Font.Bold = true;
+            rangoTotal.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+            rangoTotal.Style.Border.TopBorderColor = XLColor.Black;
+
+            ws.Cell(filaTotal, columnaEtiqueta).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+            ws.Cell(filaTotal, columnaTotalExcel).Style.NumberFormat.Format = "$#,##0.00";
+
+            ws.Row(filaSeparadora).Height = 6;
+        }
 
     }
 }
