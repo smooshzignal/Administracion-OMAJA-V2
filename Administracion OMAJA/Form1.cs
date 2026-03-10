@@ -16,6 +16,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using Microsoft.Web.WebView2.Core;
 
 namespace Administracion_OMAJA
 {
@@ -27,6 +28,8 @@ namespace Administracion_OMAJA
         private const string ColumnaSeleccionExportar = "SeleccionExportar";
 
         private readonly Dictionary<string, DataRow> seleccionPersistente = new Dictionary<string, DataRow>(StringComparer.OrdinalIgnoreCase);
+        private const string UrlPortalPaqueteriaGmTransport = "https://paqueteria.gmtransport.co/login";
+        private bool webViewPaqueteriaInicializado;
         // Colores por EstatusGuia 
 
         private readonly Dictionary<string, Color> coloresEstatus = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase)
@@ -86,7 +89,7 @@ namespace Administracion_OMAJA
                 return;
             }
 
-            // Detectar la columna de folio (puede ser FolioGuia o folio_guia según la fuente de datos)
+            // Detectar la columna de folio (puede ser FolioGuia o folio_guia 
             string colFolio = dgv.Columns.Contains("FolioGuia")
                 ? "FolioGuia"
                 : dgv.Columns.Contains("folio_guia")
@@ -119,24 +122,6 @@ namespace Administracion_OMAJA
                     }
                 }
             }
-        }
-
-        private Color? ObtenerColorPrioritario(string tipoCobro, string estatusGuia)
-        {
-            // Prioridad: TipoCobro > EstatusGuia (solo para Última Milla / Entregado / Completado y otros estatus conocidos)
-            if (!string.IsNullOrWhiteSpace(tipoCobro) &&
-                coloresTipoCobro.TryGetValue(tipoCobro.Trim().ToUpperInvariant(), out var colorCobro))
-            {
-                return colorCobro;
-            }
-
-            if (!string.IsNullOrWhiteSpace(estatusGuia) &&
-                coloresEstatus.TryGetValue(estatusGuia.Trim().ToUpperInvariant(), out var colorEstatus))
-            {
-                return colorEstatus;
-            }
-
-            return null;
         }
 
         public ADMINOMAJA()
@@ -177,6 +162,8 @@ namespace Administracion_OMAJA
             dataGridViewSeguimientos.CellClick += dataGridViewSeguimientos_CellClick;
 
             dataGridViewPrincipal.DataError += dataGridViewPrincipal_DataError;
+            tabPage6.Enter += tabPage6_Enter;
+            webView21.CoreWebView2InitializationCompleted += webView21_CoreWebView2InitializationCompleted;
         }
 
         private void ADMINOMAJA_Shown_InicializarSeguimiento(object sender, EventArgs e)
@@ -257,8 +244,82 @@ namespace Administracion_OMAJA
                 int indexTodas = comboBoxSucursalCancelaciones.FindStringExact("TODAS");
                 comboBoxSucursalCancelaciones.SelectedIndex = indexTodas >= 0 ? indexTodas : 0;
             }
+
+            if (tabControl1.SelectedTab == tabPage6)
+            {
+                BeginInvoke((Action)(async () => await InicializarWebViewPaqueteriaAsync()));
+            }
         }
 
+        private async void tabPage6_Enter(object sender, EventArgs e)
+        {
+            await InicializarWebViewPaqueteriaAsync();
+        }
+
+        private async Task InicializarWebViewPaqueteriaAsync()
+        {
+            if (webView21 == null || webView21.IsDisposed)
+            {
+                return;
+            }
+
+            if (!webViewPaqueteriaInicializado)
+            {
+                try
+                {
+                    webView21.Dock = DockStyle.Fill;
+                    webView21.Visible = true;
+
+                    await webView21.EnsureCoreWebView2Async(null);
+                    webViewPaqueteriaInicializado = true;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        "No se pudo inicializar WebView2.\n" + ex.Message,
+                        "WebView2",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            if (webView21.CoreWebView2 != null &&
+                (webView21.Source == null ||
+                 !string.Equals(webView21.Source.AbsoluteUri, UrlPortalPaqueteriaGmTransport, StringComparison.OrdinalIgnoreCase)))
+            {
+                webView21.CoreWebView2.Navigate(UrlPortalPaqueteriaGmTransport);
+            }
+        }
+
+        private void webView21_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
+        {
+            if (!e.IsSuccess)
+            {
+                MessageBox.Show(
+                    "WebView2 no pudo inicializarse correctamente.\n" + e.InitializationException.Message,
+                    "WebView2",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            webView21.CoreWebView2.Settings.IsStatusBarEnabled = false;
+            webView21.CoreWebView2.Settings.IsZoomControlEnabled = true;
+            webView21.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+            webView21.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            webView21.ZoomFactor = 1D;
+
+            webView21.CoreWebView2.Navigate(UrlPortalPaqueteriaGmTransport);
+        }
+
+        private void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            if (tabControl1.SelectedTab == tabPage6)
+            {
+                _ = InicializarWebViewPaqueteriaAsync();
+            }
+        }
 
         private class EstadoCargaExcel
         {
@@ -1017,42 +1078,6 @@ namespace Administracion_OMAJA
         {
             return !string.IsNullOrWhiteSpace(valorTipoCobro) &&
                    valorTipoCobro.IndexOf("PAGADO", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private static DataTable FiltrarGuiasPorTipoCobro(
-    DataTable origen,
-    string[] tiposCobro = null,
-    string[] estatusGuia = null,
-    bool requiereTipoCobroPagado = false)
-        {
-            if (origen == null || origen.Rows.Count == 0)
-            {
-                return origen;
-            }
-
-            HashSet<string> tiposPermitidos = tiposCobro != null && tiposCobro.Length > 0
-                ? new HashSet<string>(tiposCobro, StringComparer.OrdinalIgnoreCase)
-                : null;
-
-            HashSet<string> estatusPermitidos = estatusGuia != null && estatusGuia.Length > 0
-                ? new HashSet<string>(estatusGuia, StringComparer.OrdinalIgnoreCase)
-                : null;
-
-            var filas = origen.AsEnumerable()
-                .Where(row =>
-                {
-                    string valorTipoCobro = (row["TipoCobro"]?.ToString() ?? string.Empty).Trim();
-                    string valorEstatus = (row["EstatusGuia"]?.ToString() ?? string.Empty).Trim();
-
-                    bool coincideTipo = tiposPermitidos == null || tiposPermitidos.Contains(valorTipoCobro);
-                    bool coincideEstatus = estatusPermitidos == null || estatusPermitidos.Contains(valorEstatus);
-                    bool coincidePagado = !requiereTipoCobroPagado || ContienePagado(valorTipoCobro);
-
-                    return coincideTipo && coincideEstatus && coincidePagado;
-                })
-                .ToList();
-
-            return filas.Any() ? filas.CopyToDataTable() : origen.Clone();
         }
 
         private void ActualizarIndicadoresEstadosEntrega(DataTable dt)
@@ -3428,6 +3453,10 @@ namespace Administracion_OMAJA
             ws.Row(filaSeparadora).Height = 6;
         }
 
+        private void webView21_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
 

@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ADMINOMAJA));
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea8 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend8 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.dataGridViewPrincipal = new System.Windows.Forms.DataGridView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel2 = new System.Windows.Forms.ToolStripLabel();
@@ -175,18 +175,21 @@
             this.label19 = new System.Windows.Forms.Label();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.groupBox16 = new System.Windows.Forms.GroupBox();
+            this.button3 = new System.Windows.Forms.Button();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.label34 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
+            this.groupBox18 = new System.Windows.Forms.GroupBox();
+            this.groupBox17 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.label33 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.dateTimePicker2 = new System.Windows.Forms.DateTimePicker();
             this.label31 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
-            this.label33 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.groupBox17 = new System.Windows.Forms.GroupBox();
-            this.groupBox18 = new System.Windows.Forms.GroupBox();
-            this.button2 = new System.Windows.Forms.Button();
-            this.label34 = new System.Windows.Forms.Label();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -212,6 +215,8 @@
             this.groupBox13.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.groupBox16.SuspendLayout();
+            this.tabPage6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.webView21)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridViewPrincipal
@@ -913,16 +918,16 @@
             // 
             // chartVentasdiarias
             // 
-            chartArea8.Name = "ChartArea1";
-            this.chartVentasdiarias.ChartAreas.Add(chartArea8);
-            legend8.Name = "Legend1";
-            this.chartVentasdiarias.Legends.Add(legend8);
+            chartArea2.Name = "ChartArea1";
+            this.chartVentasdiarias.ChartAreas.Add(chartArea2);
+            legend2.Name = "Legend1";
+            this.chartVentasdiarias.Legends.Add(legend2);
             this.chartVentasdiarias.Location = new System.Drawing.Point(551, 44);
             this.chartVentasdiarias.Name = "chartVentasdiarias";
-            series8.ChartArea = "ChartArea1";
-            series8.Legend = "Legend1";
-            series8.Name = "Series1";
-            this.chartVentasdiarias.Series.Add(series8);
+            series2.ChartArea = "ChartArea1";
+            series2.Legend = "Legend1";
+            series2.Name = "Series1";
+            this.chartVentasdiarias.Series.Add(series2);
             this.chartVentasdiarias.Size = new System.Drawing.Size(1307, 481);
             this.chartVentasdiarias.TabIndex = 8;
             this.chartVentasdiarias.Text = "chart1";
@@ -934,6 +939,7 @@
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Location = new System.Drawing.Point(12, 28);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -1690,6 +1696,7 @@
             // 
             // groupBox16
             // 
+            this.groupBox16.Controls.Add(this.button3);
             this.groupBox16.Controls.Add(this.comboBox1);
             this.groupBox16.Controls.Add(this.label34);
             this.groupBox16.Controls.Add(this.button2);
@@ -1708,6 +1715,98 @@
             this.groupBox16.TabIndex = 0;
             this.groupBox16.TabStop = false;
             this.groupBox16.Text = "Cobranza Sucursal-Cliente";
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(290, 138);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(67, 20);
+            this.button3.TabIndex = 50;
+            this.button3.Text = "Buscar";
+            this.button3.UseVisualStyleBackColor = true;
+            // 
+            // comboBox1
+            // 
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Items.AddRange(new object[] {
+            "TODAS",
+            "AGS",
+            "CHICO",
+            "FER",
+            "GDL",
+            "LEON",
+            "MIX",
+            "SFCO",
+            "TABLA H",
+            "TEXTI",
+            "URIANGATO",
+            "VILLA",
+            "ZAPO"});
+            this.comboBox1.Location = new System.Drawing.Point(9, 137);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(229, 21);
+            this.comboBox1.TabIndex = 49;
+            // 
+            // label34
+            // 
+            this.label34.AutoSize = true;
+            this.label34.Location = new System.Drawing.Point(6, 121);
+            this.label34.Name = "label34";
+            this.label34.Size = new System.Drawing.Size(45, 13);
+            this.label34.TabIndex = 48;
+            this.label34.Text = "Scursal ";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(218, 424);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 47;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
+            // groupBox18
+            // 
+            this.groupBox18.Location = new System.Drawing.Point(9, 305);
+            this.groupBox18.Name = "groupBox18";
+            this.groupBox18.Size = new System.Drawing.Size(498, 113);
+            this.groupBox18.TabIndex = 46;
+            this.groupBox18.TabStop = false;
+            this.groupBox18.Text = "groupBox18";
+            // 
+            // groupBox17
+            // 
+            this.groupBox17.Location = new System.Drawing.Point(9, 173);
+            this.groupBox17.Name = "groupBox17";
+            this.groupBox17.Size = new System.Drawing.Size(498, 126);
+            this.groupBox17.TabIndex = 45;
+            this.groupBox17.TabStop = false;
+            this.groupBox17.Text = "groupBox17";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(290, 98);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(67, 20);
+            this.button1.TabIndex = 44;
+            this.button1.Text = "Buscar";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // label33
+            // 
+            this.label33.AutoSize = true;
+            this.label33.Location = new System.Drawing.Point(6, 84);
+            this.label33.Name = "label33";
+            this.label33.Size = new System.Drawing.Size(96, 13);
+            this.label33.TabIndex = 43;
+            this.label33.Text = "Nombe del Cliente:";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(6, 98);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(232, 20);
+            this.textBox1.TabIndex = 42;
             // 
             // dateTimePicker1
             // 
@@ -1741,74 +1840,29 @@
             this.label32.TabIndex = 38;
             this.label32.Text = "Fecha Inicial";
             // 
-            // button1
+            // tabPage6
             // 
-            this.button1.Location = new System.Drawing.Point(418, 98);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(67, 20);
-            this.button1.TabIndex = 44;
-            this.button1.Text = "Buscar";
-            this.button1.UseVisualStyleBackColor = true;
+            this.tabPage6.Controls.Add(this.webView21);
+            this.tabPage6.Location = new System.Drawing.Point(4, 22);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage6.Size = new System.Drawing.Size(529, 465);
+            this.tabPage6.TabIndex = 5;
+            this.tabPage6.Text = "Paqueteria GM Transport";
+            this.tabPage6.UseVisualStyleBackColor = true;
             // 
-            // label33
+            // webView21
             // 
-            this.label33.AutoSize = true;
-            this.label33.Location = new System.Drawing.Point(6, 84);
-            this.label33.Name = "label33";
-            this.label33.Size = new System.Drawing.Size(96, 13);
-            this.label33.TabIndex = 43;
-            this.label33.Text = "Nombe del Cliente:";
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(6, 98);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(406, 20);
-            this.textBox1.TabIndex = 42;
-            // 
-            // groupBox17
-            // 
-            this.groupBox17.Location = new System.Drawing.Point(9, 173);
-            this.groupBox17.Name = "groupBox17";
-            this.groupBox17.Size = new System.Drawing.Size(498, 126);
-            this.groupBox17.TabIndex = 45;
-            this.groupBox17.TabStop = false;
-            this.groupBox17.Text = "groupBox17";
-            // 
-            // groupBox18
-            // 
-            this.groupBox18.Location = new System.Drawing.Point(9, 305);
-            this.groupBox18.Name = "groupBox18";
-            this.groupBox18.Size = new System.Drawing.Size(498, 113);
-            this.groupBox18.TabIndex = 46;
-            this.groupBox18.TabStop = false;
-            this.groupBox18.Text = "groupBox18";
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(218, 424);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 47;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            // 
-            // label34
-            // 
-            this.label34.AutoSize = true;
-            this.label34.Location = new System.Drawing.Point(6, 121);
-            this.label34.Name = "label34";
-            this.label34.Size = new System.Drawing.Size(41, 13);
-            this.label34.TabIndex = 48;
-            this.label34.Text = "label34";
-            // 
-            // comboBox1
-            // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(9, 137);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(121, 21);
-            this.comboBox1.TabIndex = 49;
+            this.webView21.AllowExternalDrop = true;
+            this.webView21.CreationProperties = null;
+            this.webView21.DefaultBackgroundColor = System.Drawing.Color.White;
+            this.webView21.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.webView21.Location = new System.Drawing.Point(3, 3);
+            this.webView21.Name = "webView21";
+            this.webView21.Size = new System.Drawing.Size(523, 459);
+            this.webView21.TabIndex = 0;
+            this.webView21.ZoomFactor = 1D;
+            this.webView21.Click += new System.EventHandler(this.webView21_Click);
             // 
             // ADMINOMAJA
             // 
@@ -1863,6 +1917,8 @@
             this.tabPage5.ResumeLayout(false);
             this.groupBox16.ResumeLayout(false);
             this.groupBox16.PerformLayout();
+            this.tabPage6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.webView21)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -2024,6 +2080,9 @@
         private System.Windows.Forms.GroupBox groupBox18;
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.Label label34;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.TabPage tabPage6;
+        private Microsoft.Web.WebView2.WinForms.WebView2 webView21;
     }
 }
 
