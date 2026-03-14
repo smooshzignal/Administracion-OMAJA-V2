@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ADMINOMAJA));
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.dataGridViewPrincipal = new System.Windows.Forms.DataGridView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel2 = new System.Windows.Forms.ToolStripLabel();
@@ -175,21 +175,19 @@
             this.label19 = new System.Windows.Forms.Label();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.groupBox16 = new System.Windows.Forms.GroupBox();
-            this.button3 = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.buttonBuscarCobranzaSucursal = new System.Windows.Forms.Button();
+            this.comboBoxSucursalacobrar = new System.Windows.Forms.ComboBox();
             this.label34 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
-            this.groupBox18 = new System.Windows.Forms.GroupBox();
-            this.groupBox17 = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.label33 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.buttonBusquedaGeneralCobranza = new System.Windows.Forms.Button();
+            this.groupbox1Filtross = new System.Windows.Forms.GroupBox();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.dateTimePicker2 = new System.Windows.Forms.DateTimePicker();
             this.label31 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
+            this.dataGridViewCobranzaSucursales = new System.Windows.Forms.DataGridView();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -215,8 +213,10 @@
             this.groupBox13.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.groupBox16.SuspendLayout();
+            this.groupbox1Filtross.SuspendLayout();
             this.tabPage6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.webView21)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCobranzaSucursales)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridViewPrincipal
@@ -918,16 +918,16 @@
             // 
             // chartVentasdiarias
             // 
-            chartArea2.Name = "ChartArea1";
-            this.chartVentasdiarias.ChartAreas.Add(chartArea2);
-            legend2.Name = "Legend1";
-            this.chartVentasdiarias.Legends.Add(legend2);
+            chartArea3.Name = "ChartArea1";
+            this.chartVentasdiarias.ChartAreas.Add(chartArea3);
+            legend3.Name = "Legend1";
+            this.chartVentasdiarias.Legends.Add(legend3);
             this.chartVentasdiarias.Location = new System.Drawing.Point(551, 44);
             this.chartVentasdiarias.Name = "chartVentasdiarias";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            this.chartVentasdiarias.Series.Add(series2);
+            series3.ChartArea = "ChartArea1";
+            series3.Legend = "Legend1";
+            series3.Name = "Series1";
+            this.chartVentasdiarias.Series.Add(series3);
             this.chartVentasdiarias.Size = new System.Drawing.Size(1307, 481);
             this.chartVentasdiarias.TabIndex = 8;
             this.chartVentasdiarias.Text = "chart1";
@@ -936,9 +936,9 @@
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Location = new System.Drawing.Point(12, 28);
             this.tabControl1.Name = "tabControl1";
@@ -1691,20 +1691,17 @@
             this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage5.Size = new System.Drawing.Size(529, 465);
             this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "Cobranza";
+            this.tabPage5.Text = "Cobranza Sucursales";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
             // groupBox16
             // 
-            this.groupBox16.Controls.Add(this.button3);
-            this.groupBox16.Controls.Add(this.comboBox1);
-            this.groupBox16.Controls.Add(this.label34);
-            this.groupBox16.Controls.Add(this.button2);
-            this.groupBox16.Controls.Add(this.groupBox18);
-            this.groupBox16.Controls.Add(this.groupBox17);
             this.groupBox16.Controls.Add(this.button1);
-            this.groupBox16.Controls.Add(this.label33);
-            this.groupBox16.Controls.Add(this.textBox1);
+            this.groupBox16.Controls.Add(this.buttonBuscarCobranzaSucursal);
+            this.groupBox16.Controls.Add(this.comboBoxSucursalacobrar);
+            this.groupBox16.Controls.Add(this.label34);
+            this.groupBox16.Controls.Add(this.buttonBusquedaGeneralCobranza);
+            this.groupBox16.Controls.Add(this.groupbox1Filtross);
             this.groupBox16.Controls.Add(this.dateTimePicker1);
             this.groupBox16.Controls.Add(this.dateTimePicker2);
             this.groupBox16.Controls.Add(this.label31);
@@ -1714,99 +1711,66 @@
             this.groupBox16.Size = new System.Drawing.Size(517, 453);
             this.groupBox16.TabIndex = 0;
             this.groupBox16.TabStop = false;
-            this.groupBox16.Text = "Cobranza Sucursal-Cliente";
+            this.groupBox16.Text = "Cobranza Sucursal";
             // 
-            // button3
+            // buttonBuscarCobranzaSucursal
             // 
-            this.button3.Location = new System.Drawing.Point(290, 138);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(67, 20);
-            this.button3.TabIndex = 50;
-            this.button3.Text = "Buscar";
-            this.button3.UseVisualStyleBackColor = true;
+            this.buttonBuscarCobranzaSucursal.Location = new System.Drawing.Point(290, 89);
+            this.buttonBuscarCobranzaSucursal.Name = "buttonBuscarCobranzaSucursal";
+            this.buttonBuscarCobranzaSucursal.Size = new System.Drawing.Size(67, 20);
+            this.buttonBuscarCobranzaSucursal.TabIndex = 50;
+            this.buttonBuscarCobranzaSucursal.Text = "Buscar";
+            this.buttonBuscarCobranzaSucursal.UseVisualStyleBackColor = true;
             // 
-            // comboBox1
+            // comboBoxSucursalacobrar
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Items.AddRange(new object[] {
+            this.comboBoxSucursalacobrar.FormattingEnabled = true;
+            this.comboBoxSucursalacobrar.Items.AddRange(new object[] {
             "TODAS",
-            "AGS",
-            "CHICO",
-            "FER",
-            "GDL",
-            "LEON",
-            "MIX",
-            "SFCO",
-            "TABLA H",
-            "TEXTI",
-            "URIANGATO",
-            "VILLA",
-            "ZAPO"});
-            this.comboBox1.Location = new System.Drawing.Point(9, 137);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(229, 21);
-            this.comboBox1.TabIndex = 49;
+            "AGUASCALIENTES, AGUASCALIENTES",
+            "CHICONCUAC, ESTADO DE MEXICO",
+            "CIUDAD DE MEXICO FER",
+            "GUADALAJARA, JALISCO ",
+            "LEON, GUANAJUATO",
+            "CIUDAD DE MEXICO MIXC",
+            "SAN FRANCISCO DEL RINCON, GUANAJUATO",
+            "TABLA HONDA, ESTADO DE MEXICO",
+            "TEXTICUITZEO",
+            "URIANGATO, GUANAJUATO",
+            "VILLA HIDALGO, JALISCO",
+            "ZAPOTLANEJO, JALISCO"});
+            this.comboBoxSucursalacobrar.Location = new System.Drawing.Point(9, 88);
+            this.comboBoxSucursalacobrar.Name = "comboBoxSucursalacobrar";
+            this.comboBoxSucursalacobrar.Size = new System.Drawing.Size(229, 21);
+            this.comboBoxSucursalacobrar.TabIndex = 49;
             // 
             // label34
             // 
             this.label34.AutoSize = true;
-            this.label34.Location = new System.Drawing.Point(6, 121);
+            this.label34.Location = new System.Drawing.Point(6, 72);
             this.label34.Name = "label34";
             this.label34.Size = new System.Drawing.Size(45, 13);
             this.label34.TabIndex = 48;
             this.label34.Text = "Scursal ";
             // 
-            // button2
+            // buttonBusquedaGeneralCobranza
             // 
-            this.button2.Location = new System.Drawing.Point(218, 424);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 47;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
+            this.buttonBusquedaGeneralCobranza.Location = new System.Drawing.Point(163, 424);
+            this.buttonBusquedaGeneralCobranza.Name = "buttonBusquedaGeneralCobranza";
+            this.buttonBusquedaGeneralCobranza.Size = new System.Drawing.Size(75, 23);
+            this.buttonBusquedaGeneralCobranza.TabIndex = 47;
+            this.buttonBusquedaGeneralCobranza.Text = "Buscar";
+            this.buttonBusquedaGeneralCobranza.UseVisualStyleBackColor = true;
             // 
-            // groupBox18
+            // groupbox1Filtross
             // 
-            this.groupBox18.Location = new System.Drawing.Point(9, 305);
-            this.groupBox18.Name = "groupBox18";
-            this.groupBox18.Size = new System.Drawing.Size(498, 113);
-            this.groupBox18.TabIndex = 46;
-            this.groupBox18.TabStop = false;
-            this.groupBox18.Text = "groupBox18";
-            // 
-            // groupBox17
-            // 
-            this.groupBox17.Location = new System.Drawing.Point(9, 173);
-            this.groupBox17.Name = "groupBox17";
-            this.groupBox17.Size = new System.Drawing.Size(498, 126);
-            this.groupBox17.TabIndex = 45;
-            this.groupBox17.TabStop = false;
-            this.groupBox17.Text = "groupBox17";
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(290, 98);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(67, 20);
-            this.button1.TabIndex = 44;
-            this.button1.Text = "Buscar";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
-            // label33
-            // 
-            this.label33.AutoSize = true;
-            this.label33.Location = new System.Drawing.Point(6, 84);
-            this.label33.Name = "label33";
-            this.label33.Size = new System.Drawing.Size(96, 13);
-            this.label33.TabIndex = 43;
-            this.label33.Text = "Nombe del Cliente:";
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(6, 98);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(232, 20);
-            this.textBox1.TabIndex = 42;
+            this.groupbox1Filtross.Controls.Add(this.dataGridViewCobranzaSucursales);
+            this.groupbox1Filtross.Location = new System.Drawing.Point(9, 115);
+            this.groupbox1Filtross.Name = "groupbox1Filtross";
+            this.groupbox1Filtross.Size = new System.Drawing.Size(498, 303);
+            this.groupbox1Filtross.TabIndex = 45;
+            this.groupbox1Filtross.TabStop = false;
+            this.groupbox1Filtross.Text = "Filtrado ";
             // 
             // dateTimePicker1
             // 
@@ -1848,7 +1812,7 @@
             this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage6.Size = new System.Drawing.Size(529, 465);
             this.tabPage6.TabIndex = 5;
-            this.tabPage6.Text = "Paqueteria GM Transport";
+            this.tabPage6.Text = "Paqueteria";
             this.tabPage6.UseVisualStyleBackColor = true;
             // 
             // webView21
@@ -1863,6 +1827,24 @@
             this.webView21.TabIndex = 0;
             this.webView21.ZoomFactor = 1D;
             this.webView21.Click += new System.EventHandler(this.webView21_Click);
+            // 
+            // dataGridViewCobranzaSucursales
+            // 
+            this.dataGridViewCobranzaSucursales.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewCobranzaSucursales.Location = new System.Drawing.Point(6, 19);
+            this.dataGridViewCobranzaSucursales.Name = "dataGridViewCobranzaSucursales";
+            this.dataGridViewCobranzaSucursales.Size = new System.Drawing.Size(486, 278);
+            this.dataGridViewCobranzaSucursales.TabIndex = 0;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(277, 424);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 51;
+            this.button1.Text = "Exportar";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // ADMINOMAJA
             // 
@@ -1917,8 +1899,10 @@
             this.tabPage5.ResumeLayout(false);
             this.groupBox16.ResumeLayout(false);
             this.groupBox16.PerformLayout();
+            this.groupbox1Filtross.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.webView21)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCobranzaSucursales)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -2072,17 +2056,15 @@
         private System.Windows.Forms.DateTimePicker dateTimePicker2;
         private System.Windows.Forms.Label label31;
         private System.Windows.Forms.Label label32;
-        private System.Windows.Forms.GroupBox groupBox17;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label label33;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.GroupBox groupBox18;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.GroupBox groupbox1Filtross;
+        private System.Windows.Forms.Button buttonBusquedaGeneralCobranza;
+        private System.Windows.Forms.ComboBox comboBoxSucursalacobrar;
         private System.Windows.Forms.Label label34;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button buttonBuscarCobranzaSucursal;
         private System.Windows.Forms.TabPage tabPage6;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView21;
+        private System.Windows.Forms.DataGridView dataGridViewCobranzaSucursales;
+        private System.Windows.Forms.Button button1;
     }
 }
 

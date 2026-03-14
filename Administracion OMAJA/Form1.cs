@@ -435,19 +435,34 @@ namespace Administracion_OMAJA
 
                 Task.Run(() =>
                 {
-                    ImportarDesdeExcelConProgreso(openFileDialog.FileName, dataGridViewPrincipal, (actual, total) =>
+                    int ultimoPorcentaje = -1;
+
+                    var resultado = ImportarDesdeExcelConProgreso(openFileDialog.FileName, dataGridViewPrincipal, (actual, total) =>
                     {
-                        int percent = (int)((actual * 100.0) / total);
-                        toolStripProgressBar1.GetCurrentParent().Invoke((Action)(() =>
+                        int percent = total <= 0 ? 0 : (int)((actual * 100.0) / total);
+                        if (percent == ultimoPorcentaje)
                         {
-                            toolStripProgressBar1.Value = percent;
+                            return;
+                        }
+
+                        ultimoPorcentaje = percent;
+
+                        toolStripProgressBar1.GetCurrentParent().BeginInvoke((Action)(() =>
+                        {
+                            toolStripProgressBar1.Value = Math.Max(toolStripProgressBar1.Minimum,
+                                Math.Min(toolStripProgressBar1.Maximum, percent));
                         }));
                     });
 
-                    this.Invoke((Action)(() =>
+                    this.BeginInvoke((Action)(() =>
                     {
+                        toolStripProgressBar1.Value = 100;
                         toolStripProgressBar1.Visible = false;
-                        MessageBox.Show("Importación de Excel completada.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show(
+                            $"Importación de Excel completada.\nNuevos: {resultado.nuevos}\nActualizados: {resultado.actualizados}",
+                            "Éxito",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
                         FormatearEncabezadosDataGridView(dataGridViewPrincipal);
                         AplicarEstiloAzulClaroDataGridView(dataGridViewPrincipal);
                         ActualizarEstadoCargaExcel();
@@ -458,18 +473,15 @@ namespace Administracion_OMAJA
         }
 
 
-        private void ImportarDesdeExcelConProgreso(string filePath, DataGridView dataGridView, Action<int, int> reportProgress)
+        private (int nuevos, int actualizados) ImportarDesdeExcelConProgreso(string filePath, DataGridView dataGridView, Action<int, int> reportProgress)
         {
-            dbManager.ImportarDesdeExcel(filePath, dataGridView, reportProgress);
-
-            int nuevos = 0;
-            int actualizados = 0;
+            var resultado = dbManager.ImportarDesdeExcel(filePath, dataGridView, reportProgress);
 
             FormatearEncabezadosDataGridView(dataGridView);
             AplicarEstiloAzulClaroDataGridView(dataGridViewPrincipal);
 
             int documentosCargados = dataGridView.Rows.Cast<DataGridViewRow>().Count(r => !r.IsNewRow);
-            GuardarEstadoCargaExcel(documentosCargados, nuevos, actualizados);
+            GuardarEstadoCargaExcel(documentosCargados, resultado.nuevos, resultado.actualizados);
 
             if (InvokeRequired)
             {
@@ -484,6 +496,8 @@ namespace Administracion_OMAJA
                 ActualizarEstadoCargaExcel();
                 CargarGraficoVentas();
             }
+
+            return resultado;
         }
 
         private IEnumerable<(DateTime Inicio, DateTime Fin, string Nombre)> ObtenerRangosMensuales(DateTime inicio, DateTime fin)
@@ -1848,15 +1862,6 @@ namespace Administracion_OMAJA
         }
 
 
-
-        private static void MostrarResumenEnLabel(Label label, (int Cantidad, decimal Monto) datos, Color color)
-        {
-            label.Text = $"{datos.Cantidad}  Monto: {datos.Monto:C}";
-            label.Font = new Font(label.Font, FontStyle.Bold);
-            label.ForeColor = color;
-            label.Visible = true;
-        }
-
         private void ActualizarIndicadoresTodosLosFiltros(DataTable dt)
         {
             if (dt == null || dt.Rows.Count == 0)
@@ -2621,6 +2626,7 @@ namespace Administracion_OMAJA
                         wsDatos.Column(colNumber).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
                         table.Column(colNumber).Cells().Style.NumberFormat.Format = "$#,##0.00";
                         table.Column(colNumber).Cells().Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
                     }
                 }
 
@@ -3454,6 +3460,11 @@ namespace Administracion_OMAJA
         }
 
         private void webView21_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
         {
 
         }
