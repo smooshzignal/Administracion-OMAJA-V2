@@ -3468,6 +3468,25 @@ namespace Administracion_OMAJA
         {
 
         }
+
+        private void contaloriaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+
+            try
+            {
+                using (var formularioContraloria = new Contraloria())
+                {
+                    formularioContraloria.ShowDialog(this);
+                }
+            }
+            finally
+            {
+                this.Show();
+                this.WindowState = FormWindowState.Normal;
+                this.BringToFront();
+            }
+        }
     }
 }
 
