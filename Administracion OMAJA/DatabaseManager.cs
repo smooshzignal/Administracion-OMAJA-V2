@@ -984,6 +984,7 @@ namespace Administracion_OMAJA
                 }
             }
         }
+
         public DataTable BuscarGuias(string criterio, string valor, out string error)
         {
             var dt = new DataTable();
@@ -2254,6 +2255,41 @@ namespace Administracion_OMAJA
             }
             return dt;
         }
+
+        public DataTable ObtenerGuiasPorFiltroTipoCobroContraloria(
+    DateTime fechaInicio,
+    DateTime fechaFin,
+    string sucursal,
+    string destino,
+    bool incluirPagado,
+    bool incluirPorCobrar,
+    bool incluirCancelado)
+{
+    var condiciones = new List<string>();
+
+    if (incluirPagado)
+    {
+        condiciones.Add("(UPPER(COALESCE(TipoCobro, '')) = 'PAGADO' OR UPPER(COALESCE(TipoCobroInicial, '')) = 'PAGADO')");
+    }
+
+    if (incluirPorCobrar)
+    {
+        condiciones.Add("UPPER(COALESCE(TipoCobro, '')) = 'POR COBRAR'");
+    }
+
+    if (incluirCancelado)
+    {
+        condiciones.Add("UPPER(COALESCE(EstatusGuia, '')) = 'CANCELADO'");
+    }
+
+    if (condiciones.Count == 0)
+    {
+        return ObtenerTodasGuiasFiltrado(fechaInicio, fechaFin, sucursal, destino);
+    }
+
+    string condicionExtra = "(" + string.Join(" OR ", condiciones) + ")";
+    return EjecutarConsultaGuias(fechaInicio, fechaFin, sucursal, destino, condicionExtra);
+}
     }
 
     internal sealed class ClienteEstadisticas

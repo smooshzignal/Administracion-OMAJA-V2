@@ -1,20 +1,845 @@
-﻿using System;
+﻿using ClosedXML.Excel;
+using ClosedXML.Excel.Drawings;
+using ExcelDataReader;
+using MySql.Data.MySqlClient;
+using Mysqlx;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+using Microsoft.Web.WebView2.Core;
 
 namespace Administracion_OMAJA
 {
     public partial class Contraloria : Form
     {
+        private readonly DatabaseManager dbManager = new DatabaseManager();
+        private readonly ToolStripProgressBar toolStripProgressBarImportacion = new ToolStripProgressBar();
+
+        private readonly Dictionary<string, Color> coloresEstatus = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "DOCUMENTADO", Color.FromArgb(219, 234, 254) },
+            { "PENDIENTE", Color.FromArgb(255, 247, 214) },
+            { "EN RUTA", Color.FromArgb(213, 245, 227) },
+            { "ULTIMA MILLA", Color.FromArgb(237, 233, 254) },
+            { "ENTREGADO", Color.FromArgb(221, 236, 255) },
+            { "COMPLETADO", Color.FromArgb(189, 216, 255) }
+        };
+
+        private readonly Dictionary<string, Color> coloresTipoCobro = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "POR COBRAR", Color.FromArgb(255, 236, 179) },
+            { "CRÉDITO", Color.FromArgb(198, 246, 213) },
+            { "CREDITO", Color.FromArgb(198, 246, 213) },
+            { "PAGADO", Color.FromArgb(209, 247, 196) },
+            { "CANCELADO", Color.FromArgb(255, 204, 204) }
+        };
+
+        private readonly Color colorFacturaConValor = Color.FromArgb(255, 255, 102);
+
+        private bool filtrosInicializados;
+
         public Contraloria()
         {
             InitializeComponent();
+            InicializarEventos();
+            InicializarBarraProgresoImportacion();
+            InicializarFiltros();
+        }
+
+        private void InicializarEventos()
+        {
+            toolStripBusqueda.Click += toolStripBusqueda_Click;
+            toolStripButtoiniciarbusqueda.Click += toolStripButtoiniciarbusqueda_Click;
+            toolStripButtonBuscarFactura.Click += toolStripButtonBuscarFactura_Click;
+            buttonFiltrarTipodeCobro.Click += buttonFiltrarTipodeCobroContraloria_Click;
+
+            toolStriptxtBusqueda.KeyDown += toolStriptxtBusqueda_KeyDown;
+            toolStripTextBoxBcliente.KeyDown += toolStripTextBoxBcliente_KeyDown;
+            toolStripTextBoxBuscarFactura.KeyDown += toolStripTextBoxBuscarFactura_KeyDown;
+            toolStripTextBoxBcliente.TextChanged += toolStripTextBoxBcliente_TextChanged;
+
+            dataGridViewPrincipal.DataBindingComplete += dataGridViewPrincipal_DataBindingComplete;
+            dataGridViewPrincipal.DataError += dataGridViewPrincipal_DataError;
+            dataGridViewPrincipal.RowPostPaint += dataGridViewPrincipal_RowPostPaint;
+
+            dtpFechaInicio.ValueChanged += dtpFechaInicio_ValueChanged;
+            dtpFechaFin.ValueChanged += dtpFechaFin_ValueChanged;
+            comboBoxSucursales.SelectedIndexChanged += comboBoxSucursales_SelectedIndexChanged;
+            comboBoxSucursalDestino.SelectedIndexChanged += comboBoxSucursalDestino_SelectedIndexChanged;
+
+            dataGridViewPrincipal.RowHeadersWidth = 56;
+            dataGridViewPrincipal.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+        }
+
+        private void InicializarBarraProgresoImportacion()
+        {
+            toolStripProgressBarImportacion.Name = "toolStripProgressBarImportacion";
+            toolStripProgressBarImportacion.Alignment = ToolStripItemAlignment.Right;
+            toolStripProgressBarImportacion.AutoSize = false;
+            toolStripProgressBarImportacion.Size = new Size(160, 16);
+            toolStripProgressBarImportacion.Minimum = 0;
+            toolStripProgressBarImportacion.Maximum = 100;
+            toolStripProgressBarImportacion.Value = 0;
+            toolStripProgressBarImportacion.Visible = false;
+
+            toolStrip1.Items.Add(toolStripProgressBarImportacion);
+        }
+
+        private void PrepararBarraProgresoImportacion()
+        {
+            toolStripProgressBarImportacion.Minimum = 0;
+            toolStripProgressBarImportacion.Maximum = 100;
+            toolStripProgressBarImportacion.Value = 0;
+            toolStripProgressBarImportacion.Visible = true;
+        }
+
+        private void OcultarBarraProgresoImportacion()
+        {
+            toolStripProgressBarImportacion.Value = 0;
+            toolStripProgressBarImportacion.Visible = false;
+        }
+
+        private void importarContraloriaToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Archivos Excel|*.xlsx;*.xls";
+                openFileDialog.Title = "Importar Excel de guías";
+
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                PrepararBarraProgresoImportacion();
+
+                Task.Run(() =>
+                {
+                    int ultimoPorcentaje = -1;
+
+                    try
+                    {
+                        var resultado = dbManager.ImportarDesdeExcel(openFileDialog.FileName, dataGridViewPrincipal, (actual, total) =>
+                        {
+                            int porcentaje = total <= 0 ? 0 : (int)((actual * 100.0) / total);
+                            if (porcentaje == ultimoPorcentaje)
+                            {
+                                return;
+                            }
+
+                            ultimoPorcentaje = porcentaje;
+
+                            if (toolStrip1.IsHandleCreated)
+                            {
+                                toolStrip1.BeginInvoke((Action)(() =>
+                                {
+                                    toolStripProgressBarImportacion.Value = Math.Max(
+                                        toolStripProgressBarImportacion.Minimum,
+                                        Math.Min(toolStripProgressBarImportacion.Maximum, porcentaje));
+                                }));
+                            }
+                        });
+
+                        if (IsHandleCreated)
+                        {
+                            BeginInvoke((Action)(() =>
+                            {
+                                toolStripProgressBarImportacion.Value = 100;
+                                AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+                                OcultarBarraProgresoImportacion();
+
+                                MessageBox.Show(
+                                    string.Format(
+                                        CultureInfo.CurrentCulture,
+                                        "Importación de Excel completada.\nNuevos: {0}\nActualizados: {1}",
+                                        resultado.nuevos,
+                                        resultado.actualizados),
+                                    "Éxito",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+                            }));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (IsHandleCreated)
+                        {
+                            BeginInvoke((Action)(() =>
+                            {
+                                OcultarBarraProgresoImportacion();
+                                MessageBox.Show(
+                                    "Error al importar el archivo de Excel.\n" + ex.Message,
+                                    "Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                            }));
+                        }
+                    }
+                });
+            }
+        }
+
+        private void toolStripBusqueda_Click(object sender, EventArgs e)
+        {
+            string folio = toolStriptxtBusqueda.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(folio))
+            {
+                MessageBox.Show("Por favor, ingresa un folio para buscar.", "Advertencia",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string error;
+            DataTable resultados = dbManager.BuscarGuias("FolioGuia", folio, out error);
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                MessageBox.Show(error, "Error de búsqueda", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (resultados != null && resultados.Rows.Count > 0)
+            {
+                CargarGuiasEnGrid(OrdenarResultadoGuias(resultados));
+            }
+            else
+            {
+                dataGridViewPrincipal.DataSource = null;
+                MessageBox.Show("No se encontró el folio especificado.", "Sin resultados",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void toolStripButtoiniciarbusqueda_Click(object sender, EventArgs e)
+        {
+            string criterio = toolStripTextBoxBcliente.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(criterio))
+            {
+                MostrarClientesEnDataGridView();
+                return;
+            }
+
+            DataTable resultado = dbManager.BuscarClientesPorTexto(criterio);
+
+            if (resultado == null || resultado.Rows.Count == 0)
+            {
+                MessageBox.Show("No se encontraron clientes que coincidan con el criterio indicado.", "Sin resultados",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            MostrarClientesEnDataGridView(resultado);
+        }
+
+        private void toolStripButtonBuscarFactura_Click(object sender, EventArgs e)
+        {
+            string factura = toolStripTextBoxBuscarFactura.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(factura))
+            {
+                MessageBox.Show("Ingresa un número o clave de factura para buscar.", "Dato requerido",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string error;
+            DataTable resultados = dbManager.BuscarGuiasPorFactura(factura, out error);
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                MessageBox.Show(error, "Error de búsqueda", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (resultados != null && resultados.Rows.Count > 0)
+            {
+                CargarGuiasEnGrid(resultados);
+            }
+            else
+            {
+                dataGridViewPrincipal.DataSource = null;
+                MessageBox.Show("No se encontraron guías con la factura indicada.", "Sin resultados",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void toolStripTextBoxBcliente_TextChanged(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(toolStripTextBoxBcliente.Text))
+            {
+                MostrarClientesEnDataGridView();
+            }
+        }
+
+        private void toolStripTextBoxBcliente_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                toolStripButtoiniciarbusqueda_Click(sender, EventArgs.Empty);
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void toolStripTextBoxBuscarFactura_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                toolStripButtonBuscarFactura_Click(sender, EventArgs.Empty);
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void toolStriptxtBusqueda_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                toolStripBusqueda_Click(sender, EventArgs.Empty);
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void MostrarClientesEnDataGridView()
+        {
+            MostrarClientesEnDataGridView(dbManager.ObtenerTodosClientes());
+        }
+
+        private void MostrarClientesEnDataGridView(DataTable datos)
+        {
+            dataGridViewPrincipal.DataSource = datos;
+
+            if (dataGridViewPrincipal.Columns.Contains("Activo") &&
+                !(dataGridViewPrincipal.Columns["Activo"] is DataGridViewCheckBoxColumn))
+            {
+                int index = dataGridViewPrincipal.Columns["Activo"].Index;
+                dataGridViewPrincipal.Columns.Remove("Activo");
+
+                var checkColumn = new DataGridViewCheckBoxColumn
+                {
+                    Name = "Activo",
+                    HeaderText = "Activo",
+                    DataPropertyName = "Activo",
+                    TrueValue = true,
+                    FalseValue = false
+                };
+
+                dataGridViewPrincipal.Columns.Insert(index, checkColumn);
+            }
+
+            AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+        }
+
+        private void CargarGuiasEnGrid(DataTable datos)
+        {
+            dataGridViewPrincipal.DataSource = datos;
+            AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+        }
+
+        private static DataTable OrdenarResultadoGuias(DataTable resultados)
+        {
+            if (resultados == null || resultados.Rows.Count == 0 || !resultados.Columns.Contains("FolioGuia"))
+            {
+                return resultados;
+            }
+
+            DataTable dtOrdenada = new DataTable();
+
+            string colFolio = "FolioGuia";
+            dtOrdenada.Columns.Add(colFolio, resultados.Columns[colFolio].DataType);
+
+            string colFecha = resultados.Columns.Contains("FechaElaboracion") ? "FechaElaboracion" : null;
+            if (colFecha != null && colFecha != colFolio)
+            {
+                dtOrdenada.Columns.Add(colFecha, resultados.Columns[colFecha].DataType);
+            }
+
+            foreach (DataColumn col in resultados.Columns)
+            {
+                if (col.ColumnName != colFolio && col.ColumnName != colFecha)
+                {
+                    dtOrdenada.Columns.Add(col.ColumnName, col.DataType);
+                }
+            }
+
+            foreach (DataRow row in resultados.Rows)
+            {
+                var newRow = dtOrdenada.NewRow();
+                foreach (DataColumn col in dtOrdenada.Columns)
+                {
+                    newRow[col.ColumnName] = row[col.ColumnName];
+                }
+
+                dtOrdenada.Rows.Add(newRow);
+            }
+
+            return dtOrdenada;
+        }
+
+        private void AplicarFormatoGeneralGrid(DataGridView dgv)
+        {
+            FormatearEncabezadosDataGridView(dgv);
+            AplicarEstiloAzulClaroDataGridView(dgv);
+            ColorearFilasEstatus(dgv);
+            ColorearFacturaConValor(dgv);
+            ColorearCeldaTipoCobro(dgv);
+        }
+
+        private void FormatearEncabezadosDataGridView(DataGridView dgv)
+        {
+            if (dgv == null || dgv.Columns.Count == 0)
+            {
+                return;
+            }
+
+            var encabezados = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "FolioGuia", "Folio Guía" },
+                { "FechaElaboracion", "Fecha Elaboración" },
+                { "HoraElaboracion", "Hora Elaboración" },
+                { "EstatusGuia", "Estatus Guía" },
+                { "UbicacionActual", "Ubicación Actual" },
+                { "TipoCobro", "Tipo Cobro" },
+                { "ZonaOperativaEntrega", "Zona Operativa Entrega" },
+                { "TipoEntrega", "Tipo de Entrega" },
+                { "FechaEntrega", "Fecha Entrega" },
+                { "HoraEntrega", "Hora Entrega" },
+                { "FolioInforme", "Folio Informe" },
+                { "FolioEmbarque", "Folio Embarque" },
+                { "UsuarioDocumento", "Usuario Documento" },
+                { "FechaCancelacion", "Fecha Cancelación" },
+                { "UsuarioCancelacion", "Usuario Cancelación" },
+                { "ValorDeclarado", "Valor Declarado" },
+                { "TipoCobroInicial", "Tipo Cobro Inicial" },
+                { "FechaUltimaMilla", "Fecha Última Milla" },
+                { "MotivoCancelacion", "Motivo Cancelación" }
+            };
+
+            foreach (DataGridViewColumn col in dgv.Columns)
+            {
+                if (encabezados.TryGetValue(col.Name, out string header))
+                {
+                    col.HeaderText = header;
+                    continue;
+                }
+
+                string texto = (col.HeaderText ?? col.Name)
+                    .Replace("_", " ")
+                    .Replace("-", " ");
+
+                col.HeaderText = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLowerInvariant()).Trim();
+            }
+
+            if (dgv.Columns.Contains("Subtotal"))
+            {
+                dgv.Columns["Subtotal"].DefaultCellStyle.Format = "C";
+                dgv.Columns["Subtotal"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
+            if (dgv.Columns.Contains("Total"))
+            {
+                dgv.Columns["Total"].DefaultCellStyle.Format = "C";
+                dgv.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
+            if (dgv.Columns.Contains("ValorDeclarado"))
+            {
+                dgv.Columns["ValorDeclarado"].DefaultCellStyle.Format = "C";
+                dgv.Columns["ValorDeclarado"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+        }
+
+        private void AplicarEstiloAzulClaroDataGridView(DataGridView dgv)
+        {
+            if (dgv == null)
+            {
+                return;
+            }
+
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            dgv.EnableHeadersVisualStyles = false;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.LightSteelBlue;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font(dgv.Font, FontStyle.Bold);
+
+            dgv.DefaultCellStyle.BackColor = Color.AliceBlue;
+            dgv.DefaultCellStyle.ForeColor = Color.Black;
+            dgv.DefaultCellStyle.SelectionBackColor = Color.LightSalmon;
+            dgv.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
+        }
+
+        private void ColorearCeldaTipoCobro(DataGridView dgv)
+        {
+            if (dgv?.Rows == null || !dgv.Columns.Contains("TipoCobro"))
+            {
+                return;
+            }
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                var cell = row.Cells["TipoCobro"];
+                string valor = Convert.ToString(cell?.Value ?? string.Empty).Trim();
+
+                if (string.IsNullOrWhiteSpace(valor))
+                {
+                    continue;
+                }
+
+                if (coloresTipoCobro.TryGetValue(valor.ToUpperInvariant(), out Color color))
+                {
+                    cell.Style.BackColor = color;
+                    cell.Style.SelectionBackColor = ControlPaint.Dark(color);
+                    cell.Style.SelectionForeColor = Color.Black;
+                }
+            }
+        }
+
+        private void ColorearFacturaConValor(DataGridView dgv)
+        {
+            if (dgv?.Rows == null || !dgv.Columns.Contains("Factura"))
+            {
+                return;
+            }
+
+            string colFolio = dgv.Columns.Contains("FolioGuia")
+                ? "FolioGuia"
+                : dgv.Columns.Contains("folio_guia")
+                    ? "folio_guia"
+                    : null;
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                var facturaCell = row.Cells["Factura"];
+                string valor = Convert.ToString(facturaCell?.Value ?? string.Empty).Trim();
+
+                if (!string.IsNullOrEmpty(valor))
+                {
+                    facturaCell.Style.BackColor = colorFacturaConValor;
+                    facturaCell.Style.SelectionBackColor = ControlPaint.Dark(colorFacturaConValor);
+                    facturaCell.Style.SelectionForeColor = Color.Black;
+
+                    if (colFolio != null)
+                    {
+                        var folioCell = row.Cells[colFolio];
+                        if (folioCell != null)
+                        {
+                            folioCell.Style.BackColor = colorFacturaConValor;
+                            folioCell.Style.SelectionBackColor = ControlPaint.Dark(colorFacturaConValor);
+                            folioCell.Style.SelectionForeColor = Color.Black;
+                        }
+                    }
+                }
+            }
+        }
+
+        private string ObtenerEstatusFila(DataGridViewRow row)
+        {
+            if (row == null)
+            {
+                return string.Empty;
+            }
+
+            var cols = row.DataGridView?.Columns;
+            if (cols == null)
+            {
+                return string.Empty;
+            }
+
+            string Valor(string colName)
+            {
+                return cols.Contains(colName)
+                    ? Convert.ToString(row.Cells[colName]?.Value ?? string.Empty).Trim()
+                    : null;
+            }
+
+            return Valor("EstatusGuia")
+                ?? Valor("Estatus Guía")
+                ?? string.Empty;
+        }
+
+        private void ColorearFilasEstatus(DataGridView dgv)
+        {
+            if (dgv?.Rows == null)
+            {
+                return;
+            }
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                string estatus = ObtenerEstatusFila(row);
+                if (coloresEstatus.TryGetValue(estatus.ToUpperInvariant(), out Color color))
+                {
+                    row.DefaultCellStyle.BackColor = color;
+                    row.DefaultCellStyle.SelectionBackColor = ControlPaint.Dark(color);
+                    row.DefaultCellStyle.SelectionForeColor = Color.Black;
+                }
+            }
+        }
+
+        private void dataGridViewPrincipal_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+        }
+
+        private void dataGridViewPrincipal_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            var grid = sender as DataGridView;
+            var colName = grid?.Columns[e.ColumnIndex]?.Name ?? "(col)";
+            var val = grid?.Rows[e.RowIndex]?.Cells[e.ColumnIndex]?.Value;
+
+            MessageBox.Show(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    "DataError en columna '{0}'. Valor: '{1}'. Error: {2}",
+                    colName,
+                    val ?? "null",
+                    e.Exception?.Message),
+                "DataError",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            e.ThrowException = true;
+        }
+
+        private void dataGridViewPrincipal_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
+        {
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            string numero = (e.RowIndex + 1).ToString(CultureInfo.InvariantCulture);
+            Rectangle bounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                numero,
+                grid.RowHeadersDefaultCellStyle.Font ?? grid.Font,
+                bounds,
+                grid.RowHeadersDefaultCellStyle.ForeColor,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        }
+
+        private void exportarContraloriaToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void importarCorteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void exportarCorteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void InicializarFiltros()
+        {
+            filtrosInicializados = false;
+
+            if (comboBoxSucursales.Items.Count > 0)
+            {
+                int indexTodas = comboBoxSucursales.FindStringExact("TODAS");
+                comboBoxSucursales.SelectedIndex = indexTodas >= 0 ? indexTodas : 0;
+            }
+
+            if (comboBoxSucursalDestino.Items.Count > 0)
+            {
+                int indexTodas = comboBoxSucursalDestino.FindStringExact("TODAS");
+                comboBoxSucursalDestino.SelectedIndex = indexTodas >= 0 ? indexTodas : 0;
+            }
+
+            DateTime hoy = DateTime.Today;
+            dtpFechaFin.Value = hoy;
+            dtpFechaInicio.Value = new DateTime(hoy.Year, hoy.Month, 1);
+
+            filtrosInicializados = true;
+            CargarGuiasPorFiltros();
+        }
+
+        private void CargarGuiasPorFiltros(bool mostrarMensajeSinResultados = false)
+        {
+            DateTime fechaInicio = dtpFechaInicio.Value.Date;
+            DateTime fechaFin = dtpFechaFin.Value.Date;
+
+            if (fechaFin < fechaInicio)
+            {
+                var temp = fechaInicio;
+                fechaInicio = fechaFin;
+                fechaFin = temp;
+            }
+
+            string sucursal = comboBoxSucursales.SelectedItem?.ToString() ?? "TODAS";
+            string destino = comboBoxSucursalDestino.SelectedItem?.ToString() ?? "TODAS";
+
+            bool incluirPagado = checkBox1.Checked;
+            bool incluirPorCobrar = checkBox2.Checked;
+            bool incluirCancelado = checkBox3.Checked;
+
+            DataTable datos;
+
+            if (incluirPagado || incluirPorCobrar || incluirCancelado)
+            {
+                datos = dbManager.ObtenerGuiasPorFiltroTipoCobroContraloria(
+                    fechaInicio,
+                    fechaFin,
+                    sucursal,
+                    destino,
+                    incluirPagado,
+                    incluirPorCobrar,
+                    incluirCancelado);
+            }
+            else
+            {
+                datos = dbManager.ObtenerTodasGuiasFiltrado(fechaInicio, fechaFin, sucursal, destino);
+            }
+
+            if (datos == null || datos.Rows.Count == 0)
+            {
+                dataGridViewPrincipal.DataSource = null;
+
+                if (mostrarMensajeSinResultados)
+                {
+                    MessageBox.Show(
+                        "No se encontraron resultados para los filtros seleccionados.",
+                        "Sin resultados",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+
+                return;
+            }
+
+            CargarGuiasEnGrid(datos);
+        }
+
+        private void dtpFechaInicio_ValueChanged(object sender, EventArgs e)
+        {
+            if (dtpFechaFin.Value < dtpFechaInicio.Value)
+            {
+                dtpFechaFin.Value = dtpFechaInicio.Value;
+            }
+
+            if (!filtrosInicializados)
+            {
+                return;
+            }
+
+            CargarGuiasPorFiltros();
+        }
+
+        private void dtpFechaFin_ValueChanged(object sender, EventArgs e)
+        {
+            if (dtpFechaFin.Value < dtpFechaInicio.Value)
+            {
+                dtpFechaFin.Value = dtpFechaInicio.Value;
+            }
+
+            if (!filtrosInicializados)
+            {
+                return;
+            }
+
+            CargarGuiasPorFiltros();
+        }
+
+        private void comboBoxSucursales_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!filtrosInicializados)
+            {
+                return;
+            }
+
+            CargarGuiasPorFiltros();
+        }
+
+        private void comboBoxSucursalDestino_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!filtrosInicializados)
+            {
+                return;
+            }
+
+            CargarGuiasPorFiltros();
+        }
+
+
+        private void buttonFiltrarTipodeCobroContraloria_Click(object sender, EventArgs e)
+        {
+            AplicarFiltroTipoCobroContraloria(true);
+        }
+
+        private void AplicarFiltroTipoCobroContraloria(bool mostrarMensajeSinResultados)
+        {
+            DateTime fechaInicio = dtpFechaInicio.Value.Date;
+            DateTime fechaFin = dtpFechaFin.Value.Date;
+
+            if (fechaFin < fechaInicio)
+            {
+                var temp = fechaInicio;
+                fechaInicio = fechaFin;
+                fechaFin = temp;
+            }
+
+            string sucursal = comboBoxSucursales.SelectedItem?.ToString() ?? "TODAS";
+            string destino = comboBoxSucursalDestino.SelectedItem?.ToString() ?? "TODAS";
+
+            bool incluirPagado = checkBox1.Checked;
+            bool incluirPorCobrar = checkBox2.Checked;
+            bool incluirCancelado = checkBox3.Checked;
+
+            DataTable datos = dbManager.ObtenerGuiasPorFiltroTipoCobroContraloria(
+                fechaInicio,
+                fechaFin,
+                sucursal,
+                destino,
+                incluirPagado,
+                incluirPorCobrar,
+                incluirCancelado);
+
+            if (datos == null || datos.Rows.Count == 0)
+            {
+                dataGridViewPrincipal.DataSource = null;
+
+                if (mostrarMensajeSinResultados)
+                {
+                    MessageBox.Show(
+                        "No se encontraron resultados para el filtro de tipo de cobro.",
+                        "Sin resultados",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+
+                return;
+            }
+
+            CargarGuiasEnGrid(datos);
         }
     }
 }
