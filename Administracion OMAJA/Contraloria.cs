@@ -79,6 +79,12 @@ namespace Administracion_OMAJA
 
             dataGridViewPrincipal.RowHeadersWidth = 56;
             dataGridViewPrincipal.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            dataGridViewContraloria.DataBindingComplete += dataGridViewContraloria_DataBindingCompleteContraloria;
+            dataGridViewContraloria.DataError += dataGridViewContraloria_DataErrorContraloria;
+            dataGridViewContraloria.RowPostPaint += dataGridViewContraloria_RowPostPaintContraloria;
+            dataGridViewContraloria.RowHeadersWidth = 56;
+            dataGridViewContraloria.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
         }
 
         private void InicializarBarraProgresoImportacion()
@@ -653,6 +659,226 @@ namespace Administracion_OMAJA
 
         private void importarCorteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ImportarCorteContraloria();
+        }
+
+        private void ImportarCorteContraloria()
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Archivos Excel|*.xlsx;*.xls";
+                openFileDialog.Title = "Importar Excel de facturación";
+
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                PrepararBarraProgresoImportacion();
+
+                Task.Run(() =>
+                {
+                    int ultimoPorcentaje = -1;
+
+                    try
+                    {
+                        var resultado = dbManager.ImportarFacturacionDesdeExcelContraloria(openFileDialog.FileName, (actual, total) =>
+                        {
+                            int porcentaje = total <= 0 ? 0 : (int)((actual * 100.0) / total);
+                            if (porcentaje == ultimoPorcentaje)
+                            {
+                                return;
+                            }
+
+                            ultimoPorcentaje = porcentaje;
+
+                            if (toolStrip1.IsHandleCreated)
+                            {
+                                toolStrip1.BeginInvoke((Action)(() =>
+                                {
+                                    toolStripProgressBarImportacion.Value = Math.Max(
+                                        toolStripProgressBarImportacion.Minimum,
+                                        Math.Min(toolStripProgressBarImportacion.Maximum, porcentaje));
+                                }));
+                            }
+                        });
+
+                        if (IsHandleCreated)
+                        {
+                            BeginInvoke((Action)(() =>
+                            {
+                                dataGridViewContraloria.DataSource = resultado.datos;
+                                AplicarFormatoDataGridViewFacturacionContraloria();
+
+                                toolStripProgressBarImportacion.Value = 100;
+                                OcultarBarraProgresoImportacion();
+
+                                MessageBox.Show(
+                                    string.Format(
+                                        CultureInfo.CurrentCulture,
+                                        "Importación de facturación completada.\nNuevos: {0}\nActualizados: {1}",
+                                        resultado.nuevos,
+                                        resultado.actualizados),
+                                    "Éxito",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+                            }));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (IsHandleCreated)
+                        {
+                            BeginInvoke((Action)(() =>
+                            {
+                                OcultarBarraProgresoImportacion();
+                                MessageBox.Show(
+                                    "Error al importar el archivo de facturación.\n" + ex.Message,
+                                    "Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                            }));
+                        }
+                    }
+                });
+            }
+        }
+
+
+        private void dataGridViewContraloria_DataBindingCompleteContraloria(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            AplicarFormatoDataGridViewFacturacionContraloria();
+        }
+
+        private void dataGridViewContraloria_DataErrorContraloria(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            var grid = sender as DataGridView;
+            var colName = grid?.Columns[e.ColumnIndex]?.Name ?? "(col)";
+            var val = grid?.Rows[e.RowIndex]?.Cells[e.ColumnIndex]?.Value;
+
+            MessageBox.Show(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    "DataError en columna '{0}'. Valor: '{1}'. Error: {2}",
+                    colName,
+                    val ?? "null",
+                    e.Exception?.Message),
+                "DataError",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            e.ThrowException = true;
+        }
+
+        private void dataGridViewContraloria_RowPostPaintContraloria(object sender, DataGridViewRowPostPaintEventArgs e)
+        {
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            string numero = (e.RowIndex + 1).ToString(CultureInfo.InvariantCulture);
+            Rectangle bounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                numero,
+                grid.RowHeadersDefaultCellStyle.Font ?? grid.Font,
+                bounds,
+                grid.RowHeadersDefaultCellStyle.ForeColor,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        }
+
+        private void AplicarFormatoDataGridViewFacturacionContraloria()
+        {
+            FormatearEncabezadosDataGridViewFacturacionContraloria(dataGridViewContraloria);
+            AplicarEstiloAzulClaroDataGridViewFacturacionContraloria(dataGridViewContraloria);
+        }
+
+        private void FormatearEncabezadosDataGridViewFacturacionContraloria(DataGridView dgv)
+        {
+            if (dgv == null || dgv.Columns.Count == 0)
+            {
+                return;
+            }
+
+            var encabezados = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        { "id", "Id" },
+        { "sucursal", "Sucursal" },
+        { "fecha", "Fecha" },
+        { "numero", "Número" },
+        { "cliente", "Cliente" },
+        { "documento", "Documento" },
+        { "nota_de_debito", "Nota de Débito" },
+        { "uuid", "UUID" },
+        { "descuento", "Descuento" },
+        { "sub_total", "Sub Total" },
+        { "iva", "IVA" },
+        { "retencion", "Retención" },
+        { "total", "Total" },
+        { "moneda", "Moneda" },
+        { "estatus", "Estatus" },
+        { "folio_fiscal_uuid", "Folio Fiscal UUID" },
+        { "destino", "Destino" },
+        { "origen", "Origen" },
+        { "no_viaje", "No. Viaje" }
+    };
+
+            foreach (DataGridViewColumn col in dgv.Columns)
+            {
+                if (encabezados.TryGetValue(col.Name, out string header))
+                {
+                    col.HeaderText = header;
+                    continue;
+                }
+
+                string texto = (col.HeaderText ?? col.Name)
+                    .Replace("_", " ")
+                    .Replace("-", " ");
+
+                col.HeaderText = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLowerInvariant()).Trim();
+            }
+
+            string[] columnasMonedaContraloria =
+            {
+        "nota_de_debito",
+        "descuento",
+        "sub_total",
+        "iva",
+        "retencion",
+        "total"
+    };
+
+            foreach (string nombreColumna in columnasMonedaContraloria)
+            {
+                if (dgv.Columns.Contains(nombreColumna))
+                {
+                    dgv.Columns[nombreColumna].DefaultCellStyle.Format = "C";
+                    dgv.Columns[nombreColumna].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+            }
+        }
+
+        private void AplicarEstiloAzulClaroDataGridViewFacturacionContraloria(DataGridView dgv)
+        {
+            if (dgv == null)
+            {
+                return;
+            }
+
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            dgv.EnableHeadersVisualStyles = false;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.LightSteelBlue;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font(dgv.Font, FontStyle.Bold);
+
+            dgv.DefaultCellStyle.BackColor = Color.AliceBlue;
+            dgv.DefaultCellStyle.ForeColor = Color.Black;
+            dgv.DefaultCellStyle.SelectionBackColor = Color.LightSalmon;
+            dgv.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
         }
 
         private void exportarCorteToolStripMenuItem_Click(object sender, EventArgs e)

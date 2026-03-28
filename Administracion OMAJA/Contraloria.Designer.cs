@@ -68,10 +68,13 @@
             this.label1 = new System.Windows.Forms.Label();
             this.dtpFechaInicio = new System.Windows.Forms.DateTimePicker();
             this.dtpFechaFin = new System.Windows.Forms.DateTimePicker();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.dataGridViewContraloria = new System.Windows.Forms.DataGridView();
             this.mySqlDataAdapter1 = new MySql.Data.MySqlClient.MySqlDataAdapter();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.dataGridViewPrincipal = new System.Windows.Forms.DataGridView();
+            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.truncarGuiasContraloriaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.truncarCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupFiltros.SuspendLayout();
@@ -79,7 +82,7 @@
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.groupBox2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).BeginInit();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).BeginInit();
             this.SuspendLayout();
@@ -99,7 +102,8 @@
             this.toolStripLabel4,
             this.toolStripTextBoxBuscarFactura,
             this.toolStripButtonBuscarFactura,
-            this.toolStripSeparator3});
+            this.toolStripSeparator3,
+            this.toolStripDropDownButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1874, 25);
@@ -464,13 +468,13 @@
             this.dtpFechaFin.Size = new System.Drawing.Size(217, 20);
             this.dtpFechaFin.TabIndex = 21;
             // 
-            // dataGridView1
+            // dataGridViewContraloria
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(531, 28);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(1331, 497);
-            this.dataGridView1.TabIndex = 5;
+            this.dataGridViewContraloria.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewContraloria.Location = new System.Drawing.Point(531, 28);
+            this.dataGridViewContraloria.Name = "dataGridViewContraloria";
+            this.dataGridViewContraloria.Size = new System.Drawing.Size(1331, 497);
+            this.dataGridViewContraloria.TabIndex = 5;
             // 
             // mySqlDataAdapter1
             // 
@@ -497,13 +501,38 @@
             this.dataGridViewPrincipal.Size = new System.Drawing.Size(1838, 399);
             this.dataGridViewPrincipal.TabIndex = 4;
             // 
+            // toolStripDropDownButton2
+            // 
+            this.toolStripDropDownButton2.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.truncarGuiasContraloriaToolStripMenuItem,
+            this.truncarCortesToolStripMenuItem});
+            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
+            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            this.toolStripDropDownButton2.Size = new System.Drawing.Size(160, 22);
+            this.toolStripDropDownButton2.Text = "Administracion BD MySQL";
+            // 
+            // truncarGuiasContraloriaToolStripMenuItem
+            // 
+            this.truncarGuiasContraloriaToolStripMenuItem.Name = "truncarGuiasContraloriaToolStripMenuItem";
+            this.truncarGuiasContraloriaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.truncarGuiasContraloriaToolStripMenuItem.Text = "Truncar Guias";
+            // 
+            // truncarCortesToolStripMenuItem
+            // 
+            this.truncarCortesToolStripMenuItem.Name = "truncarCortesToolStripMenuItem";
+            this.truncarCortesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.truncarCortesToolStripMenuItem.Text = "Truncar Cortes";
+            // 
             // Contraloria
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1874, 961);
             this.Controls.Add(this.groupBox5);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.dataGridViewContraloria);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -521,7 +550,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).EndInit();
             this.groupBox5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).EndInit();
             this.ResumeLayout(false);
@@ -558,7 +587,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DateTimePicker dtpFechaInicio;
         private System.Windows.Forms.DateTimePicker dtpFechaFin;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.DataGridView dataGridViewContraloria;
         private System.Windows.Forms.GroupBox groupFiltros;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -574,5 +603,8 @@
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.DataGridView dataGridViewPrincipal;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
+        private System.Windows.Forms.ToolStripMenuItem truncarGuiasContraloriaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem truncarCortesToolStripMenuItem;
     }
 }

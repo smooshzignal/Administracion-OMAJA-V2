@@ -416,290 +416,7 @@ namespace Administracion_OMAJA
             return dt;
         }
 
-        //public void InsertarDesdeDataTable(DataTable dt, Action<int, int> reportProgress = null)
-        //{
-        //    if (dt == null || dt.Rows.Count == 0)
-        //    {
-        //        return;
-        //    }
 
-        //    string ObtenerTexto(DataRow row, string columnName)
-        //    {
-        //        return row.Table.Columns.Contains(columnName)
-        //            ? row[columnName]?.ToString() ?? string.Empty
-        //            : string.Empty;
-        //    }
-
-        //    using (var conn = new MySqlConnection(_connectionString))
-        //    {
-        //        conn.Open();
-
-        //        using (var transaction = conn.BeginTransaction())
-        //        using (var existeCmd = new MySqlCommand("SELECT COUNT(*) FROM guias WHERE FolioGuia = @folio", conn, transaction))
-        //        using (var insertCmd = new MySqlCommand(
-        //            @"INSERT INTO guias (
-        //        FechaElaboracion, HoraElaboracion, FolioGuia, EstatusGuia, Cliente, UbicacionActual, Origen,
-        //        Destino, TipoCobro, ZonaOperativaEntrega, TipoEntrega, FechaEntrega, HoraEntrega, Tracking,
-        //        Referencia, Subtotal, Total, Sucursal, FolioInforme, FolioEmbarque, UsuarioDocumento,
-        //        FechaCancelacion, UsuarioCancelacion, Remitente, Destinatario, Cajas, ValorDeclarado,
-        //        Observaciones, Factura, TimbradoSAT, FolioERP, TipoCobroInicial, FechaUltimaMilla, MotivoCancelacion
-        //    ) VALUES (
-        //        @FechaElaboracion, @HoraElaboracion, @FolioGuia, @EstatusGuia, @Cliente, @UbicacionActual, @Origen,
-        //        @Destino, @TipoCobro, @ZonaOperativaEntrega, @TipoEntrega, @FechaEntrega, @HoraEntrega, @Tracking,
-        //        @Referencia, @Subtotal, @Total, @Sucursal, @FolioInforme, @FolioEmbarque, @UsuarioDocumento,
-        //        @FechaCancelacion, @UsuarioCancelacion, @Remitente, @Destinatario, @Cajas, @ValorDeclarado,
-        //        @Observaciones, @Factura, @TimbradoSAT, @FolioERP, @TipoCobroInicial, @FechaUltimaMilla, @MotivoCancelacion
-        //    )", conn, transaction))
-        //        using (var updateCmd = new MySqlCommand(
-        //            @"UPDATE guias SET
-        //        FechaElaboracion = @FechaElaboracion,
-        //        HoraElaboracion = @HoraElaboracion,
-        //        EstatusGuia = @EstatusGuia,
-        //        Cliente = @Cliente,
-        //        UbicacionActual = @UbicacionActual,
-        //        Origen = @Origen,
-        //        Destino = @Destino,
-        //        TipoCobro = @TipoCobro,
-        //        ZonaOperativaEntrega = @ZonaOperativaEntrega,
-        //        TipoEntrega = @TipoEntrega,
-        //        FechaEntrega = @FechaEntrega,
-        //        HoraEntrega = @HoraEntrega,
-        //        Tracking = @Tracking,
-        //        Referencia = @Referencia,
-        //        Subtotal = @Subtotal,
-        //        Total = @Total,
-        //        Sucursal = @Sucursal,
-        //        FolioInforme = @FolioInforme,
-        //        FolioEmbarque = @FolioEmbarque,
-        //        UsuarioDocumento = @UsuarioDocumento,
-        //        FechaCancelacion = @FechaCancelacion,
-        //        UsuarioCancelacion = @UsuarioCancelacion,
-        //        Remitente = @Remitente,
-        //        Destinatario = @Destinatario,
-        //        Cajas = @Cajas,
-        //        ValorDeclarado = @ValorDeclarado,
-        //        Observaciones = @Observaciones,
-        //        Factura = @Factura,
-        //        TimbradoSAT = @TimbradoSAT,
-        //        FolioERP = @FolioERP,
-        //        TipoCobroInicial = @TipoCobroInicial,
-        //        FechaUltimaMilla = @FechaUltimaMilla,
-        //        MotivoCancelacion = @MotivoCancelacion
-        //    WHERE FolioGuia = @FolioGuiaWhere", conn, transaction))
-        //        {
-        //            existeCmd.Parameters.Add("@folio", MySqlDbType.VarChar);
-
-        //            insertCmd.Parameters.Add("@FechaElaboracion", MySqlDbType.DateTime);
-        //            insertCmd.Parameters.Add("@HoraElaboracion", MySqlDbType.Time);
-        //            insertCmd.Parameters.Add("@FolioGuia", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@EstatusGuia", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Cliente", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@UbicacionActual", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Origen", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Destino", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@TipoCobro", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@ZonaOperativaEntrega", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@TipoEntrega", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FechaEntrega", MySqlDbType.DateTime);
-        //            insertCmd.Parameters.Add("@HoraEntrega", MySqlDbType.Time);
-        //            insertCmd.Parameters.Add("@Tracking", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Referencia", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Subtotal", MySqlDbType.Decimal);
-        //            insertCmd.Parameters.Add("@Total", MySqlDbType.Decimal);
-        //            insertCmd.Parameters.Add("@Sucursal", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FolioInforme", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FolioEmbarque", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@UsuarioDocumento", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FechaCancelacion", MySqlDbType.DateTime);
-        //            insertCmd.Parameters.Add("@UsuarioCancelacion", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Remitente", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Destinatario", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Cajas", MySqlDbType.Int32);
-        //            insertCmd.Parameters.Add("@ValorDeclarado", MySqlDbType.Decimal);
-        //            insertCmd.Parameters.Add("@Observaciones", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@Factura", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@TimbradoSAT", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FolioERP", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@TipoCobroInicial", MySqlDbType.VarChar);
-        //            insertCmd.Parameters.Add("@FechaUltimaMilla", MySqlDbType.DateTime);
-        //            insertCmd.Parameters.Add("@MotivoCancelacion", MySqlDbType.VarChar);
-
-        //            updateCmd.Parameters.Add("@FechaElaboracion", MySqlDbType.DateTime);
-        //            updateCmd.Parameters.Add("@HoraElaboracion", MySqlDbType.Time);
-        //            updateCmd.Parameters.Add("@EstatusGuia", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Cliente", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@UbicacionActual", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Origen", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Destino", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@TipoCobro", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@ZonaOperativaEntrega", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@TipoEntrega", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FechaEntrega", MySqlDbType.DateTime);
-        //            updateCmd.Parameters.Add("@HoraEntrega", MySqlDbType.Time);
-        //            updateCmd.Parameters.Add("@Tracking", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Referencia", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Subtotal", MySqlDbType.Decimal);
-        //            updateCmd.Parameters.Add("@Total", MySqlDbType.Decimal);
-        //            updateCmd.Parameters.Add("@Sucursal", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FolioInforme", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FolioEmbarque", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@UsuarioDocumento", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FechaCancelacion", MySqlDbType.DateTime);
-        //            updateCmd.Parameters.Add("@UsuarioCancelacion", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Remitente", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Destinatario", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Cajas", MySqlDbType.Int32);
-        //            updateCmd.Parameters.Add("@ValorDeclarado", MySqlDbType.Decimal);
-        //            updateCmd.Parameters.Add("@Observaciones", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@Factura", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@TimbradoSAT", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FolioERP", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@TipoCobroInicial", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FechaUltimaMilla", MySqlDbType.DateTime);
-        //            updateCmd.Parameters.Add("@MotivoCancelacion", MySqlDbType.VarChar);
-        //            updateCmd.Parameters.Add("@FolioGuiaWhere", MySqlDbType.VarChar);
-
-        //            int nuevos = 0;
-        //            int actualizados = 0;
-        //            int totalFilas = dt.Rows.Count;
-
-        //            for (int i = 0; i < totalFilas; i++)
-        //            {
-        //                var row = dt.Rows[i];
-
-        //                try
-        //                {
-        //                    string folioGuia = ObtenerTexto(row, "Folio Guía").Trim();
-        //                    if (string.IsNullOrWhiteSpace(folioGuia))
-        //                    {
-        //                        if ((i + 1) % 100 == 0 || i + 1 == totalFilas)
-        //                        {
-        //                            reportProgress?.Invoke(i + 1, totalFilas);
-        //                        }
-
-        //                        continue;
-        //                    }
-
-        //                    string fechaHoraOriginal = ObtenerTexto(row, "Fecha/Hora Elaboración");
-        //                    DateTime? fechaElaboracion = null;
-        //                    TimeSpan? horaElaboracion = null;
-
-        //                    if (!string.IsNullOrEmpty(fechaHoraOriginal) && fechaHoraOriginal.Contains(" "))
-        //                    {
-        //                        var partes = fechaHoraOriginal.Split(' ');
-        //                        DateTime fecha;
-        //                        TimeSpan hora;
-
-        //                        if (partes.Length > 0 && DateTime.TryParse(partes[0], out fecha))
-        //                        {
-        //                            fechaElaboracion = fecha;
-        //                        }
-
-        //                        if (partes.Length > 1 && TimeSpan.TryParse(partes[1], out hora))
-        //                        {
-        //                            horaElaboracion = hora;
-        //                        }
-        //                    }
-
-        //                    string fechaHoraEntrega = ObtenerTexto(row, "Fecha y Hora de Entrega");
-        //                    DateTime? fechaEntrega = null;
-        //                    TimeSpan? horaEntrega = null;
-
-        //                    if (!string.IsNullOrEmpty(fechaHoraEntrega) && fechaHoraEntrega.Contains(" "))
-        //                    {
-        //                        var partes = fechaHoraEntrega.Split(' ');
-        //                        DateTime fecha;
-        //                        TimeSpan hora;
-
-        //                        if (partes.Length > 0 && DateTime.TryParse(partes[0], out fecha))
-        //                        {
-        //                            fechaEntrega = fecha;
-        //                        }
-
-        //                        if (partes.Length > 1 && TimeSpan.TryParse(partes[1], out hora))
-        //                        {
-        //                            horaEntrega = hora;
-        //                        }
-        //                    }
-
-        //                    DateTime fechaCancelacion;
-        //                    DateTime fechaUltimaMilla;
-        //                    decimal subtotal;
-        //                    decimal total;
-        //                    int cajas;
-        //                    decimal valorDeclarado;
-
-        //                    Action<MySqlCommand> asignarValores = cmd =>
-        //                    {
-        //                        cmd.Parameters["@FechaElaboracion"].Value = (object)fechaElaboracion ?? DBNull.Value;
-        //                        cmd.Parameters["@HoraElaboracion"].Value = (object)horaElaboracion ?? DBNull.Value;
-        //                        cmd.Parameters["@EstatusGuia"].Value = ObtenerTexto(row, "Estatus Guía");
-        //                        cmd.Parameters["@Cliente"].Value = ObtenerTexto(row, "Cliente");
-        //                        cmd.Parameters["@UbicacionActual"].Value = ObtenerTexto(row, "Ubicación Actual");
-        //                        cmd.Parameters["@Origen"].Value = ObtenerTexto(row, "Origen");
-        //                        cmd.Parameters["@Destino"].Value = ObtenerTexto(row, "Destino");
-        //                        cmd.Parameters["@TipoCobro"].Value = ObtenerTexto(row, "Tipo cobro");
-        //                        cmd.Parameters["@ZonaOperativaEntrega"].Value = ObtenerTexto(row, "Zona Operativa Entrega");
-        //                        cmd.Parameters["@TipoEntrega"].Value = ObtenerTexto(row, "Tipo de entrega");
-        //                        cmd.Parameters["@FechaEntrega"].Value = (object)fechaEntrega ?? DBNull.Value;
-        //                        cmd.Parameters["@HoraEntrega"].Value = (object)horaEntrega ?? DBNull.Value;
-        //                        cmd.Parameters["@Tracking"].Value = ObtenerTexto(row, "Tracking");
-        //                        cmd.Parameters["@Referencia"].Value = ObtenerTexto(row, "Referencia");
-        //                        cmd.Parameters["@Subtotal"].Value = decimal.TryParse(ObtenerTexto(row, "Subtotal"), out subtotal) ? subtotal : 0m;
-        //                        cmd.Parameters["@Total"].Value = decimal.TryParse(ObtenerTexto(row, "Total"), out total) ? total : 0m;
-        //                        cmd.Parameters["@Sucursal"].Value = ObtenerTexto(row, "Sucursal");
-        //                        cmd.Parameters["@FolioInforme"].Value = ObtenerTexto(row, "Folio Informe");
-        //                        cmd.Parameters["@FolioEmbarque"].Value = ObtenerTexto(row, "Folio Embarque");
-        //                        cmd.Parameters["@UsuarioDocumento"].Value = ObtenerTexto(row, "Usuario Documento");
-        //                        cmd.Parameters["@FechaCancelacion"].Value = DateTime.TryParse(ObtenerTexto(row, "Fecha de Cancelación"), out fechaCancelacion) ? (object)fechaCancelacion : DBNull.Value;
-        //                        cmd.Parameters["@UsuarioCancelacion"].Value = ObtenerTexto(row, "Usuario de Cancelación");
-        //                        cmd.Parameters["@Remitente"].Value = ObtenerTexto(row, "Remitente");
-        //                        cmd.Parameters["@Destinatario"].Value = ObtenerTexto(row, "Destinatario");
-        //                        cmd.Parameters["@Cajas"].Value = int.TryParse(ObtenerTexto(row, "Cajas"), out cajas) ? cajas : 0;
-        //                        cmd.Parameters["@ValorDeclarado"].Value = decimal.TryParse(ObtenerTexto(row, "Valor declarado"), out valorDeclarado) ? valorDeclarado : 0m;
-        //                        cmd.Parameters["@Observaciones"].Value = ObtenerTexto(row, "Observaciones");
-        //                        cmd.Parameters["@Factura"].Value = ObtenerTexto(row, "Factura");
-        //                        cmd.Parameters["@TimbradoSAT"].Value = ObtenerTexto(row, "Timbrado SAT");
-        //                        cmd.Parameters["@FolioERP"].Value = ObtenerTexto(row, "Folio ERP");
-        //                        cmd.Parameters["@TipoCobroInicial"].Value = ObtenerTexto(row, "Tipo de cobro inicial");
-        //                        cmd.Parameters["@FechaUltimaMilla"].Value = DateTime.TryParse(ObtenerTexto(row, "Fecha última milla"), out fechaUltimaMilla) ? (object)fechaUltimaMilla : DBNull.Value;
-        //                        cmd.Parameters["@MotivoCancelacion"].Value = ObtenerTexto(row, "Motivo cancelación");
-        //                    };
-
-        //                    existeCmd.Parameters["@folio"].Value = folioGuia;
-        //                    int existe = Convert.ToInt32(existeCmd.ExecuteScalar());
-
-        //                    if (existe > 0)
-        //                    {
-        //                        asignarValores(updateCmd);
-        //                        updateCmd.Parameters["@FolioGuiaWhere"].Value = folioGuia;
-        //                        updateCmd.ExecuteNonQuery();
-        //                        actualizados++;
-        //                    }
-        //                    else
-        //                    {
-        //                        asignarValores(insertCmd);
-        //                        insertCmd.Parameters["@FolioGuia"].Value = folioGuia;
-        //                        insertCmd.ExecuteNonQuery();
-        //                        nuevos++;
-        //                    }
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    Console.WriteLine($"Error al insertar/actualizar fila {i + 1}: {ex.Message}");
-        //                }
-
-        //                if ((i + 1) % 100 == 0 || i + 1 == totalFilas)
-        //                {
-        //                    reportProgress?.Invoke(i + 1, totalFilas);
-        //                }
-        //            }
-
-        //            transaction.Commit();
-        //            Console.WriteLine($"Importación completada. Nuevos: {nuevos}, Actualizados: {actualizados}");
-        //        }
-        //    }
-        //}
         public (int nuevos, int actualizados) InsertarDesdeDataTable(DataTable dt, Action<int, int> reportProgress = null)
         {
             if (dt == null || dt.Rows.Count == 0)
@@ -2256,6 +1973,329 @@ namespace Administracion_OMAJA
             return dt;
         }
 
+        private static DataColumn ObtenerColumnaPorAliasFacturacionContraloria(DataTable tabla, params string[] nombres)
+        {
+            if (tabla == null || nombres == null)
+            {
+                return null;
+            }
+
+            foreach (string nombre in nombres)
+            {
+                var columna = tabla.Columns.Cast<DataColumn>()
+                    .FirstOrDefault(c => c.ColumnName.Equals(nombre, StringComparison.OrdinalIgnoreCase));
+
+                if (columna != null)
+                {
+                    return columna;
+                }
+            }
+
+            return null;
+        }
+
+        private static object ObtenerValorColumnaFacturacionContraloria(DataRow row, params string[] nombres)
+        {
+            if (row == null || row.Table == null)
+            {
+                return null;
+            }
+
+            var columna = ObtenerColumnaPorAliasFacturacionContraloria(row.Table, nombres);
+            return columna == null ? null : row[columna];
+        }
+
+        private static string ObtenerTextoColumnaFacturacionContraloria(DataRow row, params string[] nombres)
+        {
+            object valor = ObtenerValorColumnaFacturacionContraloria(row, nombres);
+            return valor == null || valor == DBNull.Value
+                ? null
+                : Convert.ToString(valor).Trim();
+        }
+
+        private static int? ObtenerEnteroColumnaFacturacionContraloria(DataRow row, params string[] nombres)
+        {
+            object valor = ObtenerValorColumnaFacturacionContraloria(row, nombres);
+            if (valor == null || valor == DBNull.Value)
+            {
+                return null;
+            }
+
+            if (valor is int entero)
+            {
+                return entero;
+            }
+
+            if (valor is long largo)
+            {
+                return (int)largo;
+            }
+
+            if (valor is double doble)
+            {
+                return (int)Math.Round(doble);
+            }
+
+            int resultado;
+            return int.TryParse(Convert.ToString(valor), NumberStyles.Any, CultureInfo.InvariantCulture, out resultado) ||
+                   int.TryParse(Convert.ToString(valor), NumberStyles.Any, CultureInfo.CurrentCulture, out resultado)
+                ? resultado
+                : (int?)null;
+        }
+
+        private static DateTime? ObtenerFechaColumnaFacturacionContraloria(DataRow row, params string[] nombres)
+        {
+            object valor = ObtenerValorColumnaFacturacionContraloria(row, nombres);
+            if (valor == null || valor == DBNull.Value)
+            {
+                return null;
+            }
+
+            if (valor is DateTime fecha)
+            {
+                return fecha.Date;
+            }
+
+            if (valor is double oaDate)
+            {
+                return DateTime.FromOADate(oaDate).Date;
+            }
+
+            DateTime resultado;
+            return DateTime.TryParse(Convert.ToString(valor), CultureInfo.InvariantCulture, DateTimeStyles.None, out resultado) ||
+                   DateTime.TryParse(Convert.ToString(valor), CultureInfo.CurrentCulture, DateTimeStyles.None, out resultado)
+                ? resultado.Date
+                : (DateTime?)null;
+        }
+
+        private static decimal? ObtenerDecimalColumnaFacturacionContraloria(DataRow row, params string[] nombres)
+        {
+            object valor = ObtenerValorColumnaFacturacionContraloria(row, nombres);
+            if (valor == null || valor == DBNull.Value)
+            {
+                return null;
+            }
+
+            if (valor is decimal decimalValor)
+            {
+                return decimalValor;
+            }
+
+            if (valor is double doble)
+            {
+                return Convert.ToDecimal(doble);
+            }
+
+            decimal resultado;
+            return decimal.TryParse(Convert.ToString(valor), NumberStyles.Any, CultureInfo.InvariantCulture, out resultado) ||
+                   decimal.TryParse(Convert.ToString(valor), NumberStyles.Any, CultureInfo.CurrentCulture, out resultado)
+                ? resultado
+                : (decimal?)null;
+        }
+
+        public (DataTable datos, int nuevos, int actualizados) ImportarFacturacionDesdeExcelContraloria(
+    string filePath,
+    Action<int, int> reportProgress = null)
+        {
+            try
+            {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+                DataTable table;
+                using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read))
+                using (var reader = ExcelReaderFactory.CreateReader(stream))
+                {
+                    var conf = new ExcelDataSetConfiguration
+                    {
+                        ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                        {
+                            UseHeaderRow = true
+                        }
+                    };
+
+                    var result = reader.AsDataSet(conf);
+                    if (result.Tables.Count == 0)
+                    {
+                        MessageBox.Show("El archivo no contiene hojas con datos.", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return (new DataTable(), 0, 0);
+                    }
+
+                    table = result.Tables[0];
+                }
+
+                if (table.Rows.Count == 0)
+                {
+                    MessageBox.Show("El archivo no contiene registros para importar.", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return (table, 0, 0);
+                }
+
+                int nuevos = 0;
+                int actualizados = 0;
+                var erroresContraloria = new List<string>();
+
+                reportProgress?.Invoke(0, table.Rows.Count);
+
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    using (var transaction = conn.BeginTransaction())
+                    using (var existeCmd = new MySqlCommand("SELECT COUNT(*) FROM facturacion WHERE id = @id", conn, transaction))
+                    using (var insertCmd = new MySqlCommand(@"
+                INSERT INTO facturacion
+                (
+                    id, sucursal, fecha, numero, cliente, documento, nota_de_debito, uuid,
+                    descuento, sub_total, iva, retencion, total, moneda, estatus,
+                    folio_fiscal_uuid, destino, origen, no_viaje
+                )
+                VALUES
+                (
+                    @id, @sucursal, @fecha, @numero, @cliente, @documento, @nota_de_debito, @uuid,
+                    @descuento, @sub_total, @iva, @retencion, @total, @moneda, @estatus,
+                    @folio_fiscal_uuid, @destino, @origen, @no_viaje
+                )", conn, transaction))
+                    using (var updateCmd = new MySqlCommand(@"
+                UPDATE facturacion SET
+                    sucursal = @sucursal,
+                    fecha = @fecha,
+                    numero = @numero,
+                    cliente = @cliente,
+                    documento = @documento,
+                    nota_de_debito = @nota_de_debito,
+                    uuid = @uuid,
+                    descuento = @descuento,
+                    sub_total = @sub_total,
+                    iva = @iva,
+                    retencion = @retencion,
+                    total = @total,
+                    moneda = @moneda,
+                    estatus = @estatus,
+                    folio_fiscal_uuid = @folio_fiscal_uuid,
+                    destino = @destino,
+                    origen = @origen,
+                    no_viaje = @no_viaje
+                WHERE id = @id", conn, transaction))
+                    {
+                        existeCmd.Parameters.Add("@id", MySqlDbType.Int32);
+
+                        int siguienteIdFacturacionContraloria = ObtenerSiguienteIdFacturacionContraloria(conn, transaction);
+
+                        for (int i = 0; i < table.Rows.Count; i++)
+                        {
+                            DataRow row = table.Rows[i];
+
+                            try
+                            {
+                                int? idExcel = ObtenerEnteroColumnaFacturacionContraloria(row, "id", "ID", "Id");
+                                int idOperacion;
+                                bool existe;
+
+                                if (idExcel.HasValue)
+                                {
+                                    idOperacion = idExcel.Value;
+                                    existeCmd.Parameters["@id"].Value = idOperacion;
+                                    existe = Convert.ToInt32(existeCmd.ExecuteScalar()) > 0;
+
+                                    if (idOperacion >= siguienteIdFacturacionContraloria)
+                                    {
+                                        siguienteIdFacturacionContraloria = idOperacion + 1;
+                                    }
+                                }
+                                else
+                                {
+                                    idOperacion = siguienteIdFacturacionContraloria;
+                                    siguienteIdFacturacionContraloria++;
+                                    existe = false;
+                                }
+
+                                string sucursal = ObtenerTextoColumnaFacturacionContraloria(row, "sucursal", "Sucursal");
+                                DateTime? fecha = ObtenerFechaColumnaFacturacionContraloria(row, "fecha", "Fecha");
+                                string numero = ObtenerTextoColumnaFacturacionContraloria(row, "numero", "Número", "Numero");
+                                string cliente = ObtenerTextoColumnaFacturacionContraloria(row, "cliente", "Cliente");
+                                string documento = ObtenerTextoColumnaFacturacionContraloria(row, "documento", "Documento");
+                                decimal? notaDebito = ObtenerDecimalColumnaFacturacionContraloria(row, "nota_de_debito", "Nota de Débito", "Nota de Debito", "Nota Debito");
+                                string uuid = ObtenerTextoColumnaFacturacionContraloria(row, "uuid", "UUID");
+                                decimal? descuento = ObtenerDecimalColumnaFacturacionContraloria(row, "descuento", "Descuento");
+                                decimal? subTotal = ObtenerDecimalColumnaFacturacionContraloria(row, "sub_total", "Sub Total", "Subtotal");
+                                decimal? iva = ObtenerDecimalColumnaFacturacionContraloria(row, "iva", "IVA");
+                                decimal? retencion = ObtenerDecimalColumnaFacturacionContraloria(row, "retencion", "Retención", "Retencion");
+                                decimal? total = ObtenerDecimalColumnaFacturacionContraloria(row, "total", "Total");
+                                string moneda = ObtenerTextoColumnaFacturacionContraloria(row, "moneda", "Moneda");
+                                string estatus = ObtenerTextoColumnaFacturacionContraloria(row, "estatus", "Estatus");
+                                string folioFiscalUuid = ObtenerTextoColumnaFacturacionContraloria(row, "folio_fiscal_uuid", "Folio Fiscal UUID", "Folio Fiscal Uuid");
+                                string destino = ObtenerTextoColumnaFacturacionContraloria(row, "destino", "Destino");
+                                string origen = ObtenerTextoColumnaFacturacionContraloria(row, "origen", "Origen");
+                                string noViaje = ObtenerTextoColumnaFacturacionContraloria(row, "no_viaje", "No Viaje", "No. Viaje", "NoViaje");
+
+                                MySqlCommand cmd = existe ? updateCmd : insertCmd;
+                                cmd.Parameters.Clear();
+
+                                cmd.Parameters.AddWithValue("@id", idOperacion);
+                                cmd.Parameters.AddWithValue("@sucursal", (object)sucursal ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@fecha", (object)fecha ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@numero", (object)numero ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@cliente", (object)cliente ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@documento", (object)documento ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@nota_de_debito", (object)notaDebito ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@uuid", (object)uuid ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@descuento", descuento ?? 0m);
+                                cmd.Parameters.AddWithValue("@sub_total", subTotal ?? 0m);
+                                cmd.Parameters.AddWithValue("@iva", iva ?? 0m);
+                                cmd.Parameters.AddWithValue("@retencion", retencion ?? 0m);
+                                cmd.Parameters.AddWithValue("@total", total ?? 0m);
+                                cmd.Parameters.AddWithValue("@moneda", string.IsNullOrWhiteSpace(moneda) ? "PESOS" : moneda);
+                                cmd.Parameters.AddWithValue("@estatus", (object)estatus ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@folio_fiscal_uuid", (object)folioFiscalUuid ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@destino", (object)destino ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@origen", (object)origen ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@no_viaje", (object)noViaje ?? DBNull.Value);
+
+                                cmd.ExecuteNonQuery();
+
+                                if (existe)
+                                {
+                                    actualizados++;
+                                }
+                                else
+                                {
+                                    nuevos++;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                erroresContraloria.Add("Fila " + (i + 1).ToString(CultureInfo.InvariantCulture) + ": " + ex.Message);
+                            }
+
+                            reportProgress?.Invoke(i + 1, table.Rows.Count);
+                        }
+
+                        transaction.Commit();
+                    }
+                }
+
+                if (erroresContraloria.Count > 0)
+                {
+                    string detalle = string.Join(Environment.NewLine, erroresContraloria.Take(10));
+                    MessageBox.Show(
+                        "La importación terminó con errores parciales.\n" +
+                        "Nuevos: " + nuevos.ToString(CultureInfo.InvariantCulture) +
+                        "\nActualizados: " + actualizados.ToString(CultureInfo.InvariantCulture) +
+                        "\nErrores: " + erroresContraloria.Count.ToString(CultureInfo.InvariantCulture) +
+                        "\n\nPrimeros errores:\n" + detalle,
+                        "Importación parcial",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+
+                return (table, nuevos, actualizados);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al importar facturación Contraloria: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return (new DataTable(), 0, 0);
+            }
+        }
+
         public DataTable ObtenerGuiasPorFiltroTipoCobroContraloria(
     DateTime fechaInicio,
     DateTime fechaFin,
@@ -2289,6 +2329,15 @@ namespace Administracion_OMAJA
 
     string condicionExtra = "(" + string.Join(" OR ", condiciones) + ")";
     return EjecutarConsultaGuias(fechaInicio, fechaFin, sucursal, destino, condicionExtra);
+}
+
+private static int ObtenerSiguienteIdFacturacionContraloria(MySqlConnection conn, MySqlTransaction transaction)
+{
+    using (var cmd = new MySqlCommand("SELECT IFNULL(MAX(id), 0) + 1 FROM facturacion", conn, transaction))
+    {
+        object result = cmd.ExecuteScalar();
+        return result == null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
+    }
 }
     }
 
