@@ -54,6 +54,7 @@ namespace Administracion_OMAJA
             InicializarEventos();
             InicializarBarraProgresoImportacion();
             InicializarFiltros();
+            CargarFacturacionDesdeBaseContraloria();
         }
 
         private void InicializarEventos()
@@ -62,6 +63,7 @@ namespace Administracion_OMAJA
             toolStripButtoiniciarbusqueda.Click += toolStripButtoiniciarbusqueda_Click;
             toolStripButtonBuscarFactura.Click += toolStripButtonBuscarFactura_Click;
             buttonFiltrarTipodeCobro.Click += buttonFiltrarTipodeCobroContraloria_Click;
+            buttonFiltrarFacturado.Click += buttonFiltrarFacturadoContraloria_Click;
 
             toolStriptxtBusqueda.KeyDown += toolStriptxtBusqueda_KeyDown;
             toolStripTextBoxBcliente.KeyDown += toolStripTextBoxBcliente_KeyDown;
@@ -83,6 +85,9 @@ namespace Administracion_OMAJA
             dataGridViewContraloria.DataBindingComplete += dataGridViewContraloria_DataBindingCompleteContraloria;
             dataGridViewContraloria.DataError += dataGridViewContraloria_DataErrorContraloria;
             dataGridViewContraloria.RowPostPaint += dataGridViewContraloria_RowPostPaintContraloria;
+            dataGridViewContraloria.CellEndEdit += dataGridViewContraloria_CellEndEditGuardarObservacionesContraloria;
+            dataGridViewContraloria.CellDoubleClick += dataGridViewContraloria_CellDoubleClickEditarObservacionesContraloria;
+            dataGridViewContraloria.KeyDown += dataGridViewContraloria_KeyDownCopiarContraloria;
             dataGridViewContraloria.RowHeadersWidth = 56;
             dataGridViewContraloria.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
         }
@@ -707,8 +712,7 @@ namespace Administracion_OMAJA
                         {
                             BeginInvoke((Action)(() =>
                             {
-                                dataGridViewContraloria.DataSource = resultado.datos;
-                                AplicarFormatoDataGridViewFacturacionContraloria();
+                                CargarFacturacionDesdeBaseContraloria();
 
                                 toolStripProgressBarImportacion.Value = 100;
                                 OcultarBarraProgresoImportacion();
@@ -794,6 +798,208 @@ namespace Administracion_OMAJA
         {
             FormatearEncabezadosDataGridViewFacturacionContraloria(dataGridViewContraloria);
             AplicarEstiloAzulClaroDataGridViewFacturacionContraloria(dataGridViewContraloria);
+            ConfigurarEdicionDataGridViewFacturacionContraloria();
+            ConfigurarCopiadoDataGridViewFacturacionContraloria();
+            AsegurarColumnaObservacionesAuditoriaVisibleContraloria();
+        }
+
+        private void ConfigurarEdicionDataGridViewFacturacionContraloria()
+        {
+            if (dataGridViewContraloria == null || dataGridViewContraloria.Columns.Count == 0)
+            {
+                return;
+            }
+
+            dataGridViewContraloria.ReadOnly = false;
+            dataGridViewContraloria.EditMode = DataGridViewEditMode.EditProgrammatically;
+            dataGridViewContraloria.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dataGridViewContraloria.MultiSelect = true;
+            dataGridViewContraloria.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+
+            foreach (DataGridViewColumn col in dataGridViewContraloria.Columns)
+            {
+                bool esEditable = col.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase);
+                col.ReadOnly = !esEditable;
+            }
+
+            if (dataGridViewContraloria.Columns.Contains("Observaciones de auditoria"))
+            {
+                var columnaObservaciones = dataGridViewContraloria.Columns["Observaciones de auditoria"];
+                columnaObservaciones.Visible = true;
+                columnaObservaciones.ReadOnly = false;
+                columnaObservaciones.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+                columnaObservaciones.SortMode = DataGridViewColumnSortMode.NotSortable;
+                columnaObservaciones.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            }
+        }
+
+
+        private void AsegurarColumnaObservacionesAuditoriaVisibleContraloria()
+        {
+            if (dataGridViewContraloria == null || dataGridViewContraloria.Columns.Count == 0)
+            {
+                return;
+            }
+
+            if (!dataGridViewContraloria.Columns.Contains("Observaciones de auditoria"))
+            {
+                return;
+            }
+
+            var columna = dataGridViewContraloria.Columns["Observaciones de auditoria"];
+            columna.Visible = true;
+            columna.ReadOnly = false;
+            columna.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            columna.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+            if (columna.AutoSizeMode != DataGridViewAutoSizeColumnMode.DisplayedCells)
+            {
+                columna.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            }
+        }
+
+        private void ConfigurarCopiadoDataGridViewFacturacionContraloria()
+        {
+            if (dataGridViewContraloria == null)
+            {
+                return;
+            }
+
+            dataGridViewContraloria.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dataGridViewContraloria.MultiSelect = true;
+            dataGridViewContraloria.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+        }
+
+        private void dataGridViewContraloria_KeyDownCopiarContraloria(object sender, KeyEventArgs e)
+        {
+            if (!e.Control || e.KeyCode != Keys.C)
+            {
+                return;
+            }
+
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (grid.GetCellCount(DataGridViewElementStates.Selected) > 0)
+                {
+                    var contenido = grid.GetClipboardContent();
+                    if (contenido != null)
+                    {
+                        Clipboard.SetDataObject(contenido);
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        return;
+                    }
+                }
+
+                if (grid.CurrentCell != null && grid.CurrentCell.Value != null)
+                {
+                    Clipboard.SetText(Convert.ToString(grid.CurrentCell.Value, CultureInfo.CurrentCulture));
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "No se pudo copiar el contenido seleccionado.\n" + ex.Message,
+                    "Copiar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private void dataGridViewContraloria_CellDoubleClickEditarObservacionesContraloria(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            var columna = grid.Columns[e.ColumnIndex];
+            if (columna == null || !columna.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+            grid.BeginEdit(true);
+        }
+
+        private void dataGridViewContraloria_CellEndEditGuardarObservacionesContraloria(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            var columna = grid.Columns[e.ColumnIndex];
+            if (columna == null || !columna.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            GuardarObservacionesAuditoriaDataGridViewContraloria(grid.Rows[e.RowIndex]);
+        }
+
+        private void GuardarObservacionesAuditoriaDataGridViewContraloria(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow || row.DataGridView == null)
+            {
+                return;
+            }
+
+            if (!row.DataGridView.Columns.Contains("id"))
+            {
+                MessageBox.Show(
+                    "No se encontró la columna Id para guardar observaciones de auditoría.",
+                    "Dato faltante",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            int id;
+            if (!int.TryParse(Convert.ToString(row.Cells["id"]?.Value ?? string.Empty, CultureInfo.CurrentCulture), out id))
+            {
+                MessageBox.Show(
+                    "No se pudo identificar el Id del registro para guardar observaciones de auditoría.",
+                    "Dato inválido",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            string observaciones = row.DataGridView.Columns.Contains("Observaciones de auditoria")
+                ? Convert.ToString(row.Cells["Observaciones de auditoria"]?.Value ?? string.Empty)
+                : string.Empty;
+
+            bool ok = dbManager.ActualizarObservacionesAuditoriaContraloria(id, observaciones);
+            if (!ok)
+            {
+                MessageBox.Show(
+                    "No se pudieron guardar las observaciones de auditoría.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void FormatearEncabezadosDataGridViewFacturacionContraloria(DataGridView dgv)
@@ -804,27 +1010,30 @@ namespace Administracion_OMAJA
             }
 
             var encabezados = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "id", "Id" },
-        { "sucursal", "Sucursal" },
-        { "fecha", "Fecha" },
-        { "numero", "Número" },
-        { "cliente", "Cliente" },
-        { "documento", "Documento" },
-        { "nota_de_debito", "Nota de Débito" },
-        { "uuid", "UUID" },
-        { "descuento", "Descuento" },
-        { "sub_total", "Sub Total" },
-        { "iva", "IVA" },
-        { "retencion", "Retención" },
-        { "total", "Total" },
-        { "moneda", "Moneda" },
-        { "estatus", "Estatus" },
-        { "folio_fiscal_uuid", "Folio Fiscal UUID" },
-        { "destino", "Destino" },
-        { "origen", "Origen" },
-        { "no_viaje", "No. Viaje" }
-    };
+     {
+         { "id", "Id" },
+         { "sucursal", "Sucursal" },
+         { "fecha", "Fecha" },
+         { "numero", "Número" },
+         { "cliente", "Cliente" },
+         { "documento", "Documento" },
+         { "nota_de_debito", "Nota de Débito" },
+         { "uuid", "UUID" },
+         { "descuento", "Descuento" },
+         { "sub_total", "Sub Total" },
+         { "iva", "IVA" },
+         { "retencion", "Retención" },
+         { "total", "Total" },
+         { "moneda", "Moneda" },
+         { "estatus", "Estatus" },
+         { "folio_fiscal_uuid", "Folio Fiscal UUID" },
+         { "destino", "Destino" },
+         { "origen", "Origen" },
+         { "no_viaje", "No. Viaje" },
+         { "Estatus guias en cortes", "Estatus guías en cortes" },
+         { "Busqueda en cortes", "Búsqueda en cortes" },
+         { "Observaciones de auditoria", "Observaciones de auditoría" }
+     };
 
             foreach (DataGridViewColumn col in dgv.Columns)
             {
@@ -911,58 +1120,7 @@ namespace Administracion_OMAJA
 
         private void CargarGuiasPorFiltros(bool mostrarMensajeSinResultados = false)
         {
-            DateTime fechaInicio = dtpFechaInicio.Value.Date;
-            DateTime fechaFin = dtpFechaFin.Value.Date;
-
-            if (fechaFin < fechaInicio)
-            {
-                var temp = fechaInicio;
-                fechaInicio = fechaFin;
-                fechaFin = temp;
-            }
-
-            string sucursal = comboBoxSucursales.SelectedItem?.ToString() ?? "TODAS";
-            string destino = comboBoxSucursalDestino.SelectedItem?.ToString() ?? "TODAS";
-
-            bool incluirPagado = checkBox1.Checked;
-            bool incluirPorCobrar = checkBox2.Checked;
-            bool incluirCancelado = checkBox3.Checked;
-
-            DataTable datos;
-
-            if (incluirPagado || incluirPorCobrar || incluirCancelado)
-            {
-                datos = dbManager.ObtenerGuiasPorFiltroTipoCobroContraloria(
-                    fechaInicio,
-                    fechaFin,
-                    sucursal,
-                    destino,
-                    incluirPagado,
-                    incluirPorCobrar,
-                    incluirCancelado);
-            }
-            else
-            {
-                datos = dbManager.ObtenerTodasGuiasFiltrado(fechaInicio, fechaFin, sucursal, destino);
-            }
-
-            if (datos == null || datos.Rows.Count == 0)
-            {
-                dataGridViewPrincipal.DataSource = null;
-
-                if (mostrarMensajeSinResultados)
-                {
-                    MessageBox.Show(
-                        "No se encontraron resultados para los filtros seleccionados.",
-                        "Sin resultados",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-
-                return;
-            }
-
-            CargarGuiasEnGrid(datos);
+            AplicarFiltrosContraloria(mostrarMensajeSinResultados);
         }
 
         private void dtpFechaInicio_ValueChanged(object sender, EventArgs e)
@@ -1018,10 +1176,64 @@ namespace Administracion_OMAJA
 
         private void buttonFiltrarTipodeCobroContraloria_Click(object sender, EventArgs e)
         {
-            AplicarFiltroTipoCobroContraloria(true);
+            AplicarFiltrosContraloria(true);
         }
 
-        private void AplicarFiltroTipoCobroContraloria(bool mostrarMensajeSinResultados)
+
+
+        private void TruncarCortesContraloria()
+        {
+            const string mensaje = "Esta acción eliminará de forma permanente todos los registros de la tabla Cortes. ¿Deseas continuar?";
+            var confirmacion = MessageBox.Show(
+                mensaje,
+                "Confirmar eliminación masiva",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+
+            if (confirmacion != DialogResult.Yes)
+            {
+                return;
+            }
+
+            System.Windows.Forms.Cursor cursorAnterior = System.Windows.Forms.Cursor.Current;
+            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
+
+            try
+            {
+                if (dbManager.TruncarCortesContraloria())
+                {
+                    dataGridViewContraloria.DataSource = null;
+                    MessageBox.Show(
+                        "Todos los registros de facturación fueron eliminados.",
+                        "Operación completada",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            finally
+            {
+                System.Windows.Forms.Cursor.Current = cursorAnterior;
+            }
+        }
+
+        private void truncarCortesToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            TruncarCortesContraloria();
+        }
+
+        private void CargarFacturacionDesdeBaseContraloria()
+        {
+            dataGridViewContraloria.DataSource = dbManager.ObtenerFacturacionContraloria();
+            AplicarFormatoDataGridViewFacturacionContraloria();
+        }
+
+        private void buttonFiltrarFacturadoContraloria_Click(object sender, EventArgs e)
+        {
+            AplicarFiltrosContraloria(true);
+        }
+
+        private void AplicarFiltrosContraloria(bool mostrarMensajeSinResultados)
         {
             DateTime fechaInicio = dtpFechaInicio.Value.Date;
             DateTime fechaFin = dtpFechaFin.Value.Date;
@@ -1039,6 +1251,10 @@ namespace Administracion_OMAJA
             bool incluirPagado = checkBox1.Checked;
             bool incluirPorCobrar = checkBox2.Checked;
             bool incluirCancelado = checkBox3.Checked;
+            bool incluirCompletado = checkBox4.Checked;
+            bool incluirEntregada = checkBox5.Checked;
+            bool incluirFacturada = checkBox6.Checked;
+            bool incluirNoFacturada = checkBox7.Checked;
 
             DataTable datos = dbManager.ObtenerGuiasPorFiltroTipoCobroContraloria(
                 fechaInicio,
@@ -1047,7 +1263,11 @@ namespace Administracion_OMAJA
                 destino,
                 incluirPagado,
                 incluirPorCobrar,
-                incluirCancelado);
+                incluirCancelado,
+                incluirCompletado,
+                incluirEntregada,
+                incluirFacturada,
+                incluirNoFacturada);
 
             if (datos == null || datos.Rows.Count == 0)
             {
@@ -1056,7 +1276,7 @@ namespace Administracion_OMAJA
                 if (mostrarMensajeSinResultados)
                 {
                     MessageBox.Show(
-                        "No se encontraron resultados para el filtro de tipo de cobro.",
+                        ConstruirMensajeSinResultadosContraloria(sucursal, destino),
                         "Sin resultados",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
@@ -1066,6 +1286,78 @@ namespace Administracion_OMAJA
             }
 
             CargarGuiasEnGrid(datos);
+        }
+
+        private string ConstruirDescripcionFiltrosContraloria()
+        {
+            var filtros = new List<string>();
+
+            if (checkBox1.Checked)
+            {
+                filtros.Add("Pagado");
+            }
+
+            if (checkBox2.Checked)
+            {
+                filtros.Add("Por Cobrar");
+            }
+
+            if (checkBox3.Checked)
+            {
+                filtros.Add("Cancelado");
+            }
+
+            if (checkBox4.Checked)
+            {
+                filtros.Add("Completado");
+            }
+
+            if (checkBox5.Checked)
+            {
+                filtros.Add("Entregada");
+            }
+
+            if (checkBox6.Checked)
+            {
+                filtros.Add("Facturada");
+            }
+
+            if (checkBox7.Checked)
+            {
+                filtros.Add("No facturada");
+            }
+
+            return filtros.Count == 0
+                ? "Sin filtros de checkboxes"
+                : string.Join(", ", filtros);
+        }
+
+        private string ConstruirMensajeSinResultadosContraloria(string sucursal, string destino)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("No se encontraron resultados para la combinación seleccionada.");
+            sb.AppendLine();
+            sb.AppendLine("Filtros aplicados:");
+            sb.AppendLine(" - CheckBoxes: " + ConstruirDescripcionFiltrosContraloria());
+            sb.AppendLine(" - Sucursal: " + sucursal);
+            sb.AppendLine(" - Destino: " + destino);
+            sb.AppendLine(" - Fecha inicio: " + dtpFechaInicio.Value.Date.ToString("dd/MM/yyyy", CultureInfo.CurrentCulture));
+            sb.AppendLine(" - Fecha fin: " + dtpFechaFin.Value.Date.ToString("dd/MM/yyyy", CultureInfo.CurrentCulture));
+
+            if (checkBox1.Checked && checkBox2.Checked)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Nota: 'Pagado' y 'Por Cobrar' al mismo tiempo normalmente no tendrán coincidencias.");
+            }
+
+            if (checkBox6.Checked && checkBox7.Checked)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Nota: 'Facturada' y 'No facturada' al mismo tiempo normalmente no tendrán coincidencias.");
+            }
+
+            return sb.ToString();
         }
     }
 }

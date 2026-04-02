@@ -47,6 +47,9 @@
             this.toolStripTextBoxBuscarFactura = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripButtonBuscarFactura = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.truncarGuiasContraloriaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.truncarCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupFiltros = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
@@ -56,6 +59,8 @@
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkBox7 = new System.Windows.Forms.CheckBox();
+            this.checkBox6 = new System.Windows.Forms.CheckBox();
             this.buttonFiltrarTipodeCobro = new System.Windows.Forms.Button();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
@@ -68,13 +73,11 @@
             this.label1 = new System.Windows.Forms.Label();
             this.dtpFechaInicio = new System.Windows.Forms.DateTimePicker();
             this.dtpFechaFin = new System.Windows.Forms.DateTimePicker();
-            this.dataGridViewContraloria = new System.Windows.Forms.DataGridView();
             this.mySqlDataAdapter1 = new MySql.Data.MySqlClient.MySqlDataAdapter();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.dataGridViewPrincipal = new System.Windows.Forms.DataGridView();
-            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
-            this.truncarGuiasContraloriaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.truncarCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.dataGridViewContraloria = new System.Windows.Forms.DataGridView();
             this.toolStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupFiltros.SuspendLayout();
@@ -82,9 +85,10 @@
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.groupBox2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).BeginInit();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).BeginInit();
+            this.groupBox6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -233,6 +237,32 @@
             this.toolStripSeparator3.Name = "toolStripSeparator3";
             this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             // 
+            // toolStripDropDownButton2
+            // 
+            this.toolStripDropDownButton2.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.truncarGuiasContraloriaToolStripMenuItem,
+            this.truncarCortesToolStripMenuItem});
+            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
+            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            this.toolStripDropDownButton2.Size = new System.Drawing.Size(160, 22);
+            this.toolStripDropDownButton2.Text = "Administracion BD MySQL";
+            // 
+            // truncarGuiasContraloriaToolStripMenuItem
+            // 
+            this.truncarGuiasContraloriaToolStripMenuItem.Name = "truncarGuiasContraloriaToolStripMenuItem";
+            this.truncarGuiasContraloriaToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.truncarGuiasContraloriaToolStripMenuItem.Text = "Truncar Guias";
+            // 
+            // truncarCortesToolStripMenuItem
+            // 
+            this.truncarCortesToolStripMenuItem.Name = "truncarCortesToolStripMenuItem";
+            this.truncarCortesToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.truncarCortesToolStripMenuItem.Text = "Truncar Cortes";
+            this.truncarCortesToolStripMenuItem.Click += new System.EventHandler(this.truncarCortesToolStripMenuItem_Click_1);
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.groupFiltros);
@@ -265,19 +295,19 @@
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.checkBox6);
+            this.groupBox4.Controls.Add(this.checkBox7);
             this.groupBox4.Controls.Add(this.buttonFiltrarFacturado);
-            this.groupBox4.Controls.Add(this.checkBox5);
-            this.groupBox4.Controls.Add(this.checkBox4);
             this.groupBox4.Location = new System.Drawing.Point(279, 19);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(205, 100);
+            this.groupBox4.Size = new System.Drawing.Size(205, 104);
             this.groupBox4.TabIndex = 2;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Facturado";
             // 
             // buttonFiltrarFacturado
             // 
-            this.buttonFiltrarFacturado.Location = new System.Drawing.Point(124, 45);
+            this.buttonFiltrarFacturado.Location = new System.Drawing.Point(62, 77);
             this.buttonFiltrarFacturado.Name = "buttonFiltrarFacturado";
             this.buttonFiltrarFacturado.Size = new System.Drawing.Size(75, 23);
             this.buttonFiltrarFacturado.TabIndex = 2;
@@ -287,21 +317,21 @@
             // checkBox5
             // 
             this.checkBox5.AutoSize = true;
-            this.checkBox5.Location = new System.Drawing.Point(6, 63);
+            this.checkBox5.Location = new System.Drawing.Point(118, 52);
             this.checkBox5.Name = "checkBox5";
-            this.checkBox5.Size = new System.Drawing.Size(91, 17);
+            this.checkBox5.Size = new System.Drawing.Size(75, 17);
             this.checkBox5.TabIndex = 1;
-            this.checkBox5.Text = "No Facturado";
+            this.checkBox5.Text = "Entregada";
             this.checkBox5.UseVisualStyleBackColor = true;
             // 
             // checkBox4
             // 
             this.checkBox4.AutoSize = true;
-            this.checkBox4.Location = new System.Drawing.Point(6, 26);
+            this.checkBox4.Location = new System.Drawing.Point(118, 19);
             this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(74, 17);
+            this.checkBox4.Size = new System.Drawing.Size(82, 17);
             this.checkBox4.TabIndex = 0;
-            this.checkBox4.Text = "Facturado";
+            this.checkBox4.Text = "Completado";
             this.checkBox4.UseVisualStyleBackColor = true;
             // 
             // groupBox3
@@ -327,17 +357,39 @@
             this.groupBox2.Controls.Add(this.buttonFiltrarTipodeCobro);
             this.groupBox2.Controls.Add(this.checkBox3);
             this.groupBox2.Controls.Add(this.checkBox2);
+            this.groupBox2.Controls.Add(this.checkBox5);
             this.groupBox2.Controls.Add(this.checkBox1);
+            this.groupBox2.Controls.Add(this.checkBox4);
             this.groupBox2.Location = new System.Drawing.Point(6, 19);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(211, 104);
             this.groupBox2.TabIndex = 0;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Tipo de Cobro ";
+            this.groupBox2.Text = "Tipo de Cobro y Estatus Guia";
+            // 
+            // checkBox7
+            // 
+            this.checkBox7.AutoSize = true;
+            this.checkBox7.Location = new System.Drawing.Point(108, 19);
+            this.checkBox7.Name = "checkBox7";
+            this.checkBox7.Size = new System.Drawing.Size(91, 17);
+            this.checkBox7.TabIndex = 3;
+            this.checkBox7.Text = "No Facturada";
+            this.checkBox7.UseVisualStyleBackColor = true;
+            // 
+            // checkBox6
+            // 
+            this.checkBox6.AutoSize = true;
+            this.checkBox6.Location = new System.Drawing.Point(6, 19);
+            this.checkBox6.Name = "checkBox6";
+            this.checkBox6.Size = new System.Drawing.Size(74, 17);
+            this.checkBox6.TabIndex = 3;
+            this.checkBox6.Text = "Facturada";
+            this.checkBox6.UseVisualStyleBackColor = true;
             // 
             // buttonFiltrarTipodeCobro
             // 
-            this.buttonFiltrarTipodeCobro.Location = new System.Drawing.Point(130, 45);
+            this.buttonFiltrarTipodeCobro.Location = new System.Drawing.Point(125, 75);
             this.buttonFiltrarTipodeCobro.Name = "buttonFiltrarTipodeCobro";
             this.buttonFiltrarTipodeCobro.Size = new System.Drawing.Size(75, 23);
             this.buttonFiltrarTipodeCobro.TabIndex = 2;
@@ -347,7 +399,7 @@
             // checkBox3
             // 
             this.checkBox3.AutoSize = true;
-            this.checkBox3.Location = new System.Drawing.Point(6, 81);
+            this.checkBox3.Location = new System.Drawing.Point(5, 81);
             this.checkBox3.Name = "checkBox3";
             this.checkBox3.Size = new System.Drawing.Size(77, 17);
             this.checkBox3.TabIndex = 0;
@@ -468,14 +520,6 @@
             this.dtpFechaFin.Size = new System.Drawing.Size(217, 20);
             this.dtpFechaFin.TabIndex = 21;
             // 
-            // dataGridViewContraloria
-            // 
-            this.dataGridViewContraloria.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewContraloria.Location = new System.Drawing.Point(531, 28);
-            this.dataGridViewContraloria.Name = "dataGridViewContraloria";
-            this.dataGridViewContraloria.Size = new System.Drawing.Size(1331, 497);
-            this.dataGridViewContraloria.TabIndex = 5;
-            // 
             // mySqlDataAdapter1
             // 
             this.mySqlDataAdapter1.DeleteCommand = null;
@@ -491,7 +535,7 @@
             this.groupBox5.Size = new System.Drawing.Size(1850, 424);
             this.groupBox5.TabIndex = 6;
             this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "groupBox5";
+            this.groupBox5.Text = "Seguimiento de facturacion en documento Guias";
             // 
             // dataGridViewPrincipal
             // 
@@ -501,38 +545,31 @@
             this.dataGridViewPrincipal.Size = new System.Drawing.Size(1838, 399);
             this.dataGridViewPrincipal.TabIndex = 4;
             // 
-            // toolStripDropDownButton2
+            // groupBox6
             // 
-            this.toolStripDropDownButton2.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
-            this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.truncarGuiasContraloriaToolStripMenuItem,
-            this.truncarCortesToolStripMenuItem});
-            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
-            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
-            this.toolStripDropDownButton2.Size = new System.Drawing.Size(160, 22);
-            this.toolStripDropDownButton2.Text = "Administracion BD MySQL";
+            this.groupBox6.Controls.Add(this.dataGridViewContraloria);
+            this.groupBox6.Location = new System.Drawing.Point(531, 28);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(1331, 497);
+            this.groupBox6.TabIndex = 7;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Seguiemiento de Corte por Sucursal";
             // 
-            // truncarGuiasContraloriaToolStripMenuItem
+            // dataGridViewContraloria
             // 
-            this.truncarGuiasContraloriaToolStripMenuItem.Name = "truncarGuiasContraloriaToolStripMenuItem";
-            this.truncarGuiasContraloriaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.truncarGuiasContraloriaToolStripMenuItem.Text = "Truncar Guias";
-            // 
-            // truncarCortesToolStripMenuItem
-            // 
-            this.truncarCortesToolStripMenuItem.Name = "truncarCortesToolStripMenuItem";
-            this.truncarCortesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.truncarCortesToolStripMenuItem.Text = "Truncar Cortes";
+            this.dataGridViewContraloria.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewContraloria.Location = new System.Drawing.Point(6, 19);
+            this.dataGridViewContraloria.Name = "dataGridViewContraloria";
+            this.dataGridViewContraloria.Size = new System.Drawing.Size(1319, 466);
+            this.dataGridViewContraloria.TabIndex = 6;
             // 
             // Contraloria
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1874, 961);
+            this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.groupBox5);
-            this.Controls.Add(this.dataGridViewContraloria);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -550,9 +587,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).EndInit();
             this.groupBox5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).EndInit();
+            this.groupBox6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewContraloria)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -587,7 +625,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DateTimePicker dtpFechaInicio;
         private System.Windows.Forms.DateTimePicker dtpFechaFin;
-        private System.Windows.Forms.DataGridView dataGridViewContraloria;
         private System.Windows.Forms.GroupBox groupFiltros;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -606,5 +643,9 @@
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
         private System.Windows.Forms.ToolStripMenuItem truncarGuiasContraloriaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem truncarCortesToolStripMenuItem;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.DataGridView dataGridViewContraloria;
+        private System.Windows.Forms.CheckBox checkBox7;
+        private System.Windows.Forms.CheckBox checkBox6;
     }
 }

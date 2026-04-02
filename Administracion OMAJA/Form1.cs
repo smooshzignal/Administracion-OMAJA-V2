@@ -483,20 +483,6 @@ namespace Administracion_OMAJA
             int documentosCargados = dataGridView.Rows.Cast<DataGridViewRow>().Count(r => !r.IsNewRow);
             GuardarEstadoCargaExcel(documentosCargados, resultado.nuevos, resultado.actualizados);
 
-            if (InvokeRequired)
-            {
-                this.Invoke((Action)(() =>
-                {
-                    ActualizarEstadoCargaExcel();
-                    CargarGraficoVentas();
-                }));
-            }
-            else
-            {
-                ActualizarEstadoCargaExcel();
-                CargarGraficoVentas();
-            }
-
             return resultado;
         }
 

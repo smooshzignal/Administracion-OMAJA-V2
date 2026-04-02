@@ -754,11 +754,11 @@ namespace Administracion_OMAJA
         {
             var dt = new DataTable();
             error = null;
-    
+
             try
             {
                 using (var conn = new MySqlConnection(_connectionString))
-                {       
+                {
                     conn.Open();
                     string query = "SELECT * FROM Guias WHERE Factura LIKE @factura ORDER BY FechaElaboracion DESC";
 
@@ -941,7 +941,7 @@ namespace Administracion_OMAJA
         public DateTime FechaUltimaCarga { get; set; }
         public int DocumentosCargadosHoy { get; set; }
 
-       public void CargarHistorialDesdeEstado(List<RegistroCarga> historial)
+        public void CargarHistorialDesdeEstado(List<RegistroCarga> historial)
         {
             if (historial == null || historial.Count == 0)
             {
@@ -1081,7 +1081,7 @@ namespace Administracion_OMAJA
             }
         }
 
-        // Utilidad para parsear líneas CSV (soporta comillas y comas)
+
         private static List<string> ParseCsvLine(string line)
         {
             var result = new List<string>();
@@ -1343,6 +1343,32 @@ namespace Administracion_OMAJA
             }
         }
 
+        public bool TruncarCortesContraloria()
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand("TRUNCATE TABLE facturacion", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "No se pudieron eliminar los registros de facturación: " + ex.Message,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
         private static string ConstruirPatronCliente(string cliente)
         {
             return $"%{cliente.Trim().ToUpperInvariant()}%";
@@ -1444,7 +1470,7 @@ namespace Administracion_OMAJA
                       AND UPPER(COALESCE(Cliente, '')) LIKE @cliente
                       AND COALESCE(UPPER(EstatusGuia), '') <> 'CANCELADO'
                     GROUP BY Destino
-                    ORDER BY TotalCajas DESC, Destino;"; 
+                    ORDER BY TotalCajas DESC, Destino;";
 
                 using (var cmd = new MySqlCommand(destinosQuery, conn))
                 {
@@ -1654,6 +1680,172 @@ namespace Administracion_OMAJA
             return dt;
         }
 
+        public DataTable ObtenerFacturacionContraloria()
+        {
+            var dt = new DataTable();
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+
+                const string query = @"
+            SELECT
+                id,
+                sucursal,
+                fecha,
+                numero,
+                cliente,
+                documento,
+                nota_de_debito,
+                uuid,
+                descuento,
+                sub_total,
+                iva,
+                retencion,
+                total,
+                moneda,
+                estatus,
+                folio_fiscal_uuid,
+                destino,
+                origen,
+                no_viaje,
+                `Estatus guias en cortes`,
+                `Busqueda en cortes`,
+                `Observaciones de auditoria`
+            FROM facturacion
+            ORDER BY fecha DESC, id DESC";
+
+                using (var cmd = new MySqlCommand(query, conn))
+                using (var adapter = new MySqlDataAdapter(cmd))
+                {
+                    adapter.Fill(dt);
+                }
+            }
+
+            return dt;
+        }
+
+        public (int UltimaMilla, int EnRuta, int Documentado, int Pendiente) ObtenerConteoSeguimientoPorPrefijoAvanzado(DateTime fechaCorte, string prefijoFolio)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    const string sql = @"
+                SELECT 
+                    SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'ULTIMA MILLA' THEN 1 ELSE 0 END) AS UM,
+                    SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'EN RUTA' THEN 1 ELSE 0 END) AS ER,
+                    SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'DOCUMENTADO' THEN 1 ELSE 0 END) AS DOC,
+                    SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'PENDIENTE' THEN 1 ELSE 0 END) AS PEN
+                FROM guias
+                WHERE FolioGuia LIKE @prefijo
+                  AND FechaElaboracion IS NOT NULL
+                  AND FechaElaboracion <= @corte";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prefijo", prefijoFolio + "%");
+                        cmd.Parameters.AddWithValue("@corte", fechaCorte);
+                        using (var rd = cmd.ExecuteReader())
+                        {
+                            if (rd.Read())
+                            {
+                                return (
+                                    rd["UM"] == DBNull.Value ? 0 : Convert.ToInt32(rd["UM"]),
+                                    rd["ER"] == DBNull.Value ? 0 : Convert.ToInt32(rd["ER"]),
+                                    rd["DOC"] == DBNull.Value ? 0 : Convert.ToInt32(rd["DOC"]),
+                                    rd["PEN"] == DBNull.Value ? 0 : Convert.ToInt32(rd["PEN"])
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return (0, 0, 0, 0);
+        }
+
+        public DataTable ObtenerGuiasSeguimientoPorPrefijo(DateTime fechaCorte, string prefijoFolio, IList<string> estatus = null)
+        {
+            var dt = new DataTable();
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+
+                var sql = new StringBuilder(@"
+            SELECT *
+            FROM guias
+            WHERE FolioGuia LIKE @prefijo
+              AND FechaElaboracion IS NOT NULL
+              AND FechaElaboracion <= @corte");
+
+                if (estatus != null && estatus.Count > 0)
+                {
+                    var placeholders = estatus.Select((s, i) => "@e" + i).ToArray();
+                    sql.Append(" AND UPPER(COALESCE(EstatusGuia,'')) IN (");
+                    sql.Append(string.Join(",", placeholders));
+                    sql.Append(")");
+                }
+
+                sql.Append(" ORDER BY FechaElaboracion DESC");
+
+                using (var cmd = new MySqlCommand(sql.ToString(), conn))
+                {
+                    cmd.Parameters.AddWithValue("@prefijo", prefijoFolio + "%");
+                    cmd.Parameters.AddWithValue("@corte", fechaCorte);
+
+                    if (estatus != null)
+                    {
+                        for (int i = 0; i < estatus.Count; i++)
+                        {
+                            cmd.Parameters.AddWithValue("@e" + i, estatus[i].ToUpperInvariant());
+                        }
+                    }
+
+                    using (var adapter = new MySqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        private static DataColumn ObtenerColumnaPorAliasFacturacionContraloria(DataTable tabla, params string[] nombres)
+        {
+            if (tabla == null || nombres == null)
+            {
+                return null;
+            }
+
+            foreach (string nombre in nombres)
+            {
+                var columna = tabla.Columns.Cast<DataColumn>()
+                    .FirstOrDefault(c => c.ColumnName.Equals(nombre, StringComparison.OrdinalIgnoreCase));
+
+                if (columna != null)
+                {
+                    return columna;
+                }
+            }
+
+            return null;
+        }
+
+        private static int ObtenerSiguienteIdFacturacionContraloria(MySqlConnection conn, MySqlTransaction transaction)
+        {
+            using (var cmd = new MySqlCommand("SELECT IFNULL(MAX(id), 0) + 1 FROM facturacion", conn, transaction))
+            {
+                object result = cmd.ExecuteScalar();
+                return result == null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
+            }
+        }
+
         public DataTable ObtenerGuiasCanceladasPorSucursal(DateTime fechaInicio, DateTime fechaFin, string origen = "TODAS")
         {
             var dt = new DataTable();
@@ -1843,125 +2035,89 @@ namespace Administracion_OMAJA
             }
         }
 
-        // Agrega debajo de ObtenerGuiasPorEstatus
-        public (int Documentado, int Pendiente) ObtenerConteoSeguimientoPorPrefijo(DateTime fechaCorte, string prefijoFolio)
-        {
-            try
-            {
-                using (var conn = new MySqlConnection(_connectionString))
-                {
-                    conn.Open();
-                    const string sql = @"
-                        SELECT 
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'DOCUMENTADO' THEN 1 ELSE 0 END) AS Doc,
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'PENDIENTE' THEN 1 ELSE 0 END) AS Pen
-                        FROM guias
-                        WHERE FolioGuia LIKE @prefijo
-                          AND FechaElaboracion IS NOT NULL
-                          AND FechaElaboracion <= @corte";
-                    using (var cmd = new MySqlCommand(sql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@prefijo", prefijoFolio + "%");
-                        cmd.Parameters.AddWithValue("@corte", fechaCorte);
-                        using (var rd = cmd.ExecuteReader())
-                        {
-                            if (rd.Read())
-                            {
-                                int doc = rd["Doc"] == DBNull.Value ? 0 : Convert.ToInt32(rd["Doc"]);
-                                int pen = rd["Pen"] == DBNull.Value ? 0 : Convert.ToInt32(rd["Pen"]);
-                                return (doc, pen);
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // silenciar y devolver ceros
-            }
-            return (0, 0);
-        }
-
-        // NUEVO: consulta avanzada para seguimiento por prefijo (4 estatus)
-        public (int UltimaMilla, int EnRuta, int Documentado, int Pendiente) ObtenerConteoSeguimientoPorPrefijoAvanzado(DateTime fechaCorte, string prefijoFolio)
-        {
-            try
-            {
-                using (var conn = new MySqlConnection(_connectionString))
-                {
-                    conn.Open();
-                    const string sql = @"
-                        SELECT 
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'ULTIMA MILLA' THEN 1 ELSE 0 END) AS UM,
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'EN RUTA' THEN 1 ELSE 0 END) AS ER,
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'DOCUMENTADO' THEN 1 ELSE 0 END) AS DOC,
-                            SUM(CASE WHEN UPPER(COALESCE(EstatusGuia,'')) = 'PENDIENTE' THEN 1 ELSE 0 END) AS PEN
-                        FROM guias
-                        WHERE FolioGuia LIKE @prefijo
-                          AND FechaElaboracion IS NOT NULL
-                          AND FechaElaboracion <= @corte";
-                    using (var cmd = new MySqlCommand(sql, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@prefijo", prefijoFolio + "%");
-                        cmd.Parameters.AddWithValue("@corte", fechaCorte);
-                        using (var rd = cmd.ExecuteReader())
-                        {
-                            if (rd.Read())
-                            {
-                                return (
-                                    rd["UM"] == DBNull.Value ? 0 : Convert.ToInt32(rd["UM"]),
-                                    rd["ER"] == DBNull.Value ? 0 : Convert.ToInt32(rd["ER"]),
-                                    rd["DOC"] == DBNull.Value ? 0 : Convert.ToInt32(rd["DOC"]),
-                                    rd["PEN"] == DBNull.Value ? 0 : Convert.ToInt32(rd["PEN"])
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // silencioso, devuelve ceros
-            }
-            return (0, 0, 0, 0);
-        }
-
-        // NUEVO: detalle de guías por prefijo y corte (>= 3 días de atraso)
-        public DataTable ObtenerGuiasSeguimientoPorPrefijo(DateTime fechaCorte, string prefijoFolio, IList<string> estatus = null)
+        public DataTable ObtenerGuiasPorFiltroTipoCobroContraloria(
+    DateTime fechaInicio,
+    DateTime fechaFin,
+    string sucursal,
+    string destino,
+    bool incluirPagado,
+    bool incluirPorCobrar,
+    bool incluirCancelado,
+    bool incluirCompletado,
+    bool incluirEntregada,
+    bool incluirFacturada,
+    bool incluirNoFacturada)
         {
             var dt = new DataTable();
+
             using (var conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
 
-                var sql = new StringBuilder(@"
-                    SELECT *
-                    FROM guias
-                    WHERE FolioGuia LIKE @prefijo
-                      AND FechaElaboracion IS NOT NULL
-                      AND FechaElaboracion <= @corte");
+                var query = new StringBuilder("SELECT * FROM guias WHERE FechaElaboracion BETWEEN @inicio AND @fin");
 
-                if (estatus != null && estatus.Count > 0)
+                if (incluirPagado)
                 {
-                    var placeholders = estatus.Select((s, i) => "@e" + i).ToArray();
-                    sql.Append(" AND UPPER(COALESCE(EstatusGuia,'')) IN (");
-                    sql.Append(string.Join(",", placeholders));
-                    sql.Append(")");
+                    query.Append(" AND UPPER(TRIM(COALESCE(TipoCobro, ''))) = 'PAGADO'");
                 }
 
-                sql.Append(" ORDER BY FechaElaboracion DESC");
-
-                using (var cmd = new MySqlCommand(sql.ToString(), conn))
+                if (incluirPorCobrar)
                 {
-                    cmd.Parameters.AddWithValue("@prefijo", prefijoFolio + "%");
-                    cmd.Parameters.AddWithValue("@corte", fechaCorte);
+                    query.Append(" AND UPPER(TRIM(COALESCE(TipoCobro, ''))) = 'POR COBRAR'");
+                }
 
-                    if (estatus != null)
+                if (incluirCancelado)
+                {
+                    query.Append(" AND (UPPER(TRIM(COALESCE(TipoCobro, ''))) = 'CANCELADO' OR UPPER(TRIM(COALESCE(EstatusGuia, ''))) = 'CANCELADO')");
+                }
+
+                if (incluirCompletado)
+                {
+                    query.Append(" AND UPPER(TRIM(COALESCE(EstatusGuia, ''))) = 'COMPLETADO'");
+                }
+
+                if (incluirEntregada)
+                {
+                    query.Append(" AND UPPER(TRIM(COALESCE(EstatusGuia, ''))) = 'ENTREGADA'");
+                }
+
+                if (incluirFacturada)
+                {
+                    query.Append(" AND TRIM(COALESCE(Factura, '')) <> ''");
+                }
+
+                if (incluirNoFacturada)
+                {
+                    query.Append(" AND TRIM(COALESCE(Factura, '')) = ''");
+                }
+
+                bool filtraSucursal = DebeFiltrarSucursal(sucursal);
+                if (filtraSucursal)
+                {
+                    query.Append(" AND Sucursal = @sucursal");
+                }
+
+                bool filtraDestino = DebeFiltrarDestino(destino);
+                if (filtraDestino)
+                {
+                    query.Append(" AND UPPER(TRIM(Destino)) = @destino");
+                }
+
+                query.Append(" ORDER BY FechaElaboracion DESC");
+
+                using (var cmd = new MySqlCommand(query.ToString(), conn))
+                {
+                    cmd.Parameters.AddWithValue("@inicio", fechaInicio);
+                    cmd.Parameters.AddWithValue("@fin", fechaFin);
+
+                    if (filtraSucursal)
                     {
-                        for (int i = 0; i < estatus.Count; i++)
-                        {
-                            cmd.Parameters.AddWithValue("@e" + i, estatus[i].ToUpperInvariant());
-                        }
+                        cmd.Parameters.AddWithValue("@sucursal", sucursal);
+                    }
+
+                    if (filtraDestino)
+                    {
+                        cmd.Parameters.AddWithValue("@destino", destino.Trim().ToUpperInvariant());
                     }
 
                     using (var adapter = new MySqlDataAdapter(cmd))
@@ -1970,28 +2126,29 @@ namespace Administracion_OMAJA
                     }
                 }
             }
+
             return dt;
         }
 
-        private static DataColumn ObtenerColumnaPorAliasFacturacionContraloria(DataTable tabla, params string[] nombres)
+        public bool ActualizarObservacionesAuditoriaContraloria(int id, string observaciones)
         {
-            if (tabla == null || nombres == null)
+            using (var conn = new MySqlConnection(_connectionString))
             {
-                return null;
-            }
+                conn.Open();
 
-            foreach (string nombre in nombres)
-            {
-                var columna = tabla.Columns.Cast<DataColumn>()
-                    .FirstOrDefault(c => c.ColumnName.Equals(nombre, StringComparison.OrdinalIgnoreCase));
+                const string query = @"
+            UPDATE facturacion
+            SET `Observaciones de auditoria` = @observaciones
+            WHERE id = @id";
 
-                if (columna != null)
+                using (var cmd = new MySqlCommand(query, conn))
                 {
-                    return columna;
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@observaciones", (object)observaciones ?? DBNull.Value);
+
+                    return cmd.ExecuteNonQuery() > 0;
                 }
             }
-
-            return null;
         }
 
         private static object ObtenerValorColumnaFacturacionContraloria(DataRow row, params string[] nombres)
@@ -2021,19 +2178,19 @@ namespace Administracion_OMAJA
                 return null;
             }
 
-            if (valor is int entero)
+            if (valor is int)
             {
-                return entero;
+                return (int)valor;
             }
 
-            if (valor is long largo)
+            if (valor is long)
             {
-                return (int)largo;
+                return (int)(long)valor;
             }
 
-            if (valor is double doble)
+            if (valor is double)
             {
-                return (int)Math.Round(doble);
+                return (int)Math.Round((double)valor);
             }
 
             int resultado;
@@ -2051,14 +2208,14 @@ namespace Administracion_OMAJA
                 return null;
             }
 
-            if (valor is DateTime fecha)
+            if (valor is DateTime)
             {
-                return fecha.Date;
+                return ((DateTime)valor).Date;
             }
 
-            if (valor is double oaDate)
+            if (valor is double)
             {
-                return DateTime.FromOADate(oaDate).Date;
+                return DateTime.FromOADate((double)valor).Date;
             }
 
             DateTime resultado;
@@ -2076,14 +2233,14 @@ namespace Administracion_OMAJA
                 return null;
             }
 
-            if (valor is decimal decimalValor)
+            if (valor is decimal)
             {
-                return decimalValor;
+                return (decimal)valor;
             }
 
-            if (valor is double doble)
+            if (valor is double)
             {
-                return Convert.ToDecimal(doble);
+                return Convert.ToDecimal((double)valor);
             }
 
             decimal resultado;
@@ -2093,9 +2250,80 @@ namespace Administracion_OMAJA
                 : (decimal?)null;
         }
 
+        private static bool DebeExcluirFilaImportacionFacturacionContraloria(string documento)
+        {
+            if (string.IsNullOrWhiteSpace(documento))
+            {
+                return false;
+            }
+
+            string texto = documento.Trim().ToUpperInvariant();
+
+            return texto.Contains("TOTAL DEL CLIENTE PESOS") ||
+                   texto.Contains("TOTAL DE LA SUCURSAL PESOS") ||
+                   texto.Contains("GRAN TOTAL PESOS");
+        }
+
+        private static DataTable FiltrarFilasTotalesFacturacionContraloria(DataTable origen)
+        {
+            if (origen == null)
+            {
+                return new DataTable();
+            }
+
+            var filtrada = origen.Clone();
+
+            foreach (DataRow row in origen.Rows)
+            {
+                string documento = ObtenerTextoColumnaFacturacionContraloria(row, "documento", "Documento");
+                if (!DebeExcluirFilaImportacionFacturacionContraloria(documento))
+                {
+                    filtrada.ImportRow(row);
+                }
+            }
+
+            return filtrada;
+        }
+
+        private (string FolioGuia, string EstatusGuia) ObtenerDatosGuiaParaFacturacionContraloria(
+            string documento,
+            MySqlConnection conn,
+            MySqlTransaction transaction)
+        {
+            if (string.IsNullOrWhiteSpace(documento))
+            {
+                return (null, null);
+            }
+
+            const string query = @"
+        SELECT FolioGuia, EstatusGuia
+        FROM guias
+        WHERE TRIM(COALESCE(Factura, '')) = TRIM(@documento)
+        ORDER BY FechaElaboracion DESC, ID DESC
+        LIMIT 1";
+
+            using (var cmd = new MySqlCommand(query, conn, transaction))
+            {
+                cmd.Parameters.AddWithValue("@documento", documento.Trim());
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return (
+                            reader["FolioGuia"] == DBNull.Value ? null : Convert.ToString(reader["FolioGuia"]),
+                            reader["EstatusGuia"] == DBNull.Value ? null : Convert.ToString(reader["EstatusGuia"])
+                        );
+                    }
+                }
+            }
+
+            return (null, null);
+        }
+
         public (DataTable datos, int nuevos, int actualizados) ImportarFacturacionDesdeExcelContraloria(
-    string filePath,
-    Action<int, int> reportProgress = null)
+     string filePath,
+     Action<int, int> reportProgress = null)
         {
             try
             {
@@ -2129,6 +2357,18 @@ namespace Administracion_OMAJA
                     return (table, 0, 0);
                 }
 
+                table = FiltrarFilasTotalesFacturacionContraloria(table);
+
+                if (table.Rows.Count == 0)
+                {
+                    MessageBox.Show(
+                        "El archivo solo contiene filas de totales o no quedaron registros válidos para importar.",
+                        "Sin datos válidos",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return (table, 0, 0);
+                }
+
                 int nuevos = 0;
                 int actualizados = 0;
                 var erroresContraloria = new List<string>();
@@ -2146,13 +2386,15 @@ namespace Administracion_OMAJA
                 (
                     id, sucursal, fecha, numero, cliente, documento, nota_de_debito, uuid,
                     descuento, sub_total, iva, retencion, total, moneda, estatus,
-                    folio_fiscal_uuid, destino, origen, no_viaje
+                    folio_fiscal_uuid, destino, origen, no_viaje,
+                    `Estatus guias en cortes`, `Busqueda en cortes`, `Observaciones de auditoria`
                 )
                 VALUES
                 (
                     @id, @sucursal, @fecha, @numero, @cliente, @documento, @nota_de_debito, @uuid,
                     @descuento, @sub_total, @iva, @retencion, @total, @moneda, @estatus,
-                    @folio_fiscal_uuid, @destino, @origen, @no_viaje
+                    @folio_fiscal_uuid, @destino, @origen, @no_viaje,
+                    @estatus_guias_en_cortes, @busqueda_en_cortes, @observaciones_de_auditoria
                 )", conn, transaction))
                     using (var updateCmd = new MySqlCommand(@"
                 UPDATE facturacion SET
@@ -2173,7 +2415,9 @@ namespace Administracion_OMAJA
                     folio_fiscal_uuid = @folio_fiscal_uuid,
                     destino = @destino,
                     origen = @origen,
-                    no_viaje = @no_viaje
+                    no_viaje = @no_viaje,
+                    `Estatus guias en cortes` = @estatus_guias_en_cortes,
+                    `Busqueda en cortes` = @busqueda_en_cortes
                 WHERE id = @id", conn, transaction))
                     {
                         existeCmd.Parameters.Add("@id", MySqlDbType.Int32);
@@ -2227,6 +2471,10 @@ namespace Administracion_OMAJA
                                 string origen = ObtenerTextoColumnaFacturacionContraloria(row, "origen", "Origen");
                                 string noViaje = ObtenerTextoColumnaFacturacionContraloria(row, "no_viaje", "No Viaje", "No. Viaje", "NoViaje");
 
+                                var datosGuia = ObtenerDatosGuiaParaFacturacionContraloria(documento, conn, transaction);
+                                string estatusGuiasEnCortes = datosGuia.EstatusGuia;
+                                string busquedaEnCortes = datosGuia.FolioGuia;
+
                                 MySqlCommand cmd = existe ? updateCmd : insertCmd;
                                 cmd.Parameters.Clear();
 
@@ -2249,6 +2497,13 @@ namespace Administracion_OMAJA
                                 cmd.Parameters.AddWithValue("@destino", (object)destino ?? DBNull.Value);
                                 cmd.Parameters.AddWithValue("@origen", (object)origen ?? DBNull.Value);
                                 cmd.Parameters.AddWithValue("@no_viaje", (object)noViaje ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@estatus_guias_en_cortes", (object)estatusGuiasEnCortes ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@busqueda_en_cortes", (object)busquedaEnCortes ?? DBNull.Value);
+
+                                if (!existe)
+                                {
+                                    cmd.Parameters.AddWithValue("@observaciones_de_auditoria", DBNull.Value);
+                                }
 
                                 cmd.ExecuteNonQuery();
 
@@ -2271,23 +2526,23 @@ namespace Administracion_OMAJA
 
                         transaction.Commit();
                     }
-                }
 
-                if (erroresContraloria.Count > 0)
-                {
-                    string detalle = string.Join(Environment.NewLine, erroresContraloria.Take(10));
-                    MessageBox.Show(
-                        "La importación terminó con errores parciales.\n" +
-                        "Nuevos: " + nuevos.ToString(CultureInfo.InvariantCulture) +
-                        "\nActualizados: " + actualizados.ToString(CultureInfo.InvariantCulture) +
-                        "\nErrores: " + erroresContraloria.Count.ToString(CultureInfo.InvariantCulture) +
-                        "\n\nPrimeros errores:\n" + detalle,
-                        "Importación parcial",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                }
+                    if (erroresContraloria.Count > 0)
+                    {
+                        string detalle = string.Join(Environment.NewLine, erroresContraloria.Take(10));
+                        MessageBox.Show(
+                            "La importación terminó con errores parciales.\n" +
+                            "Nuevos: " + nuevos.ToString(CultureInfo.InvariantCulture) +
+                            "\nActualizados: " + actualizados.ToString(CultureInfo.InvariantCulture) +
+                            "\nErrores: " + erroresContraloria.Count.ToString(CultureInfo.InvariantCulture) +
+                            "\n\nPrimeros errores:\n" + detalle,
+                            "Importación parcial",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                    }
 
-                return (table, nuevos, actualizados);
+                    return (table, nuevos, actualizados);
+                }
             }
             catch (Exception ex)
             {
@@ -2295,63 +2550,20 @@ namespace Administracion_OMAJA
                 return (new DataTable(), 0, 0);
             }
         }
-
-        public DataTable ObtenerGuiasPorFiltroTipoCobroContraloria(
-    DateTime fechaInicio,
-    DateTime fechaFin,
-    string sucursal,
-    string destino,
-    bool incluirPagado,
-    bool incluirPorCobrar,
-    bool incluirCancelado)
-{
-    var condiciones = new List<string>();
-
-    if (incluirPagado)
-    {
-        condiciones.Add("(UPPER(COALESCE(TipoCobro, '')) = 'PAGADO' OR UPPER(COALESCE(TipoCobroInicial, '')) = 'PAGADO')");
-    }
-
-    if (incluirPorCobrar)
-    {
-        condiciones.Add("UPPER(COALESCE(TipoCobro, '')) = 'POR COBRAR'");
-    }
-
-    if (incluirCancelado)
-    {
-        condiciones.Add("UPPER(COALESCE(EstatusGuia, '')) = 'CANCELADO'");
-    }
-
-    if (condiciones.Count == 0)
-    {
-        return ObtenerTodasGuiasFiltrado(fechaInicio, fechaFin, sucursal, destino);
-    }
-
-    string condicionExtra = "(" + string.Join(" OR ", condiciones) + ")";
-    return EjecutarConsultaGuias(fechaInicio, fechaFin, sucursal, destino, condicionExtra);
-}
-
-private static int ObtenerSiguienteIdFacturacionContraloria(MySqlConnection conn, MySqlTransaction transaction)
-{
-    using (var cmd = new MySqlCommand("SELECT IFNULL(MAX(id), 0) + 1 FROM facturacion", conn, transaction))
-    {
-        object result = cmd.ExecuteScalar();
-        return result == null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
+        
     }
 }
-    }
 
-    internal sealed class ClienteEstadisticas
-    {
-        public int GuiasPorCobrar { get; set; }
-        public decimal MontoPorCobrar { get; set; }
-        public int GuiasPagadasOrigen { get; set; }
-        public decimal MontoPagadasOrigen { get; set; }
-        public int GuiasPagadasDestino { get; set; }
-        public decimal MontoPagadasDestino { get; set; }
-        public int GuiasCanceladas { get; set; }
-        public decimal MontoCanceladas { get; set; }
-        public int PaquetesEnviados { get; set; }
-        public List<(string Destino, int TotalCajas)> Destinos { get; } = new List<(string Destino, int TotalCajas)>();
-    }
+internal sealed class ClienteEstadisticas
+{
+    public int GuiasPorCobrar { get; set; }
+    public decimal MontoPorCobrar { get; set; }
+    public int GuiasPagadasOrigen { get; set; }
+    public decimal MontoPagadasOrigen { get; set; }
+    public int GuiasPagadasDestino { get; set; }
+    public decimal MontoPagadasDestino { get; set; }
+    public int GuiasCanceladas { get; set; }
+    public decimal MontoCanceladas { get; set; }
+    public int PaquetesEnviados { get; set; }
+    public List<(string Destino, int TotalCajas)> Destinos { get; } = new List<(string Destino, int TotalCajas)>();
 }
