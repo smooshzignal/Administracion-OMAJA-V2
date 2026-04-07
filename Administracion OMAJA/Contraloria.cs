@@ -45,8 +45,23 @@ namespace Administracion_OMAJA
         };
 
         private readonly Color colorFacturaConValor = Color.FromArgb(255, 255, 102);
+        private readonly Color colorDescuentoContraloria = Color.FromArgb(153, 255, 102);
 
         private bool filtrosInicializados;
+
+        private readonly Dictionary<int, string> overridesEstatusGuiasEnCortesContraloria = new Dictionary<int, string>();
+
+        private static readonly string[] opcionesManualEstatusGuiasEnCortesContraloria =
+        {
+            "Faltante.",
+            "Pagada en Destino.",
+            "Matriz.",
+            "Pagada en Origen.",
+            "Pagada en Origen/No Entregado.",
+            "Pendiente de pago."
+        };
+
+        private bool configurandoComboEstatusGuiasEnCortesContraloria;
 
         public Contraloria()
         {
@@ -87,6 +102,9 @@ namespace Administracion_OMAJA
             dataGridViewContraloria.RowPostPaint += dataGridViewContraloria_RowPostPaintContraloria;
             dataGridViewContraloria.CellEndEdit += dataGridViewContraloria_CellEndEditGuardarObservacionesContraloria;
             dataGridViewContraloria.CellDoubleClick += dataGridViewContraloria_CellDoubleClickEditarObservacionesContraloria;
+            dataGridViewContraloria.CellClick += dataGridViewContraloria_CellClickEstatusGuiasEnCortesContraloria;
+            dataGridViewContraloria.CurrentCellDirtyStateChanged += dataGridViewContraloria_CurrentCellDirtyStateChangedEstatusGuiasEnCortesContraloria;
+            dataGridViewContraloria.CellValueChanged += dataGridViewContraloria_CellValueChangedEstatusGuiasEnCortesContraloria;
             dataGridViewContraloria.KeyDown += dataGridViewContraloria_KeyDownCopiarContraloria;
             dataGridViewContraloria.RowHeadersWidth = 56;
             dataGridViewContraloria.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -586,6 +604,7 @@ namespace Administracion_OMAJA
 
             return Valor("EstatusGuia")
                 ?? Valor("Estatus Guía")
+                ?? Valor("Estatus guias en cortes")
                 ?? string.Empty;
         }
 
@@ -603,7 +622,16 @@ namespace Administracion_OMAJA
                     continue;
                 }
 
+                row.DefaultCellStyle.BackColor = dgv.DefaultCellStyle.BackColor;
+                row.DefaultCellStyle.SelectionBackColor = dgv.DefaultCellStyle.SelectionBackColor;
+                row.DefaultCellStyle.SelectionForeColor = dgv.DefaultCellStyle.SelectionForeColor;
+
                 string estatus = ObtenerEstatusFila(row);
+                if (string.IsNullOrWhiteSpace(estatus))
+                {
+                    continue;
+                }
+
                 if (coloresEstatus.TryGetValue(estatus.ToUpperInvariant(), out Color color))
                 {
                     row.DefaultCellStyle.BackColor = color;
@@ -757,6 +785,16 @@ namespace Administracion_OMAJA
         private void dataGridViewContraloria_DataErrorContraloria(object sender, DataGridViewDataErrorEventArgs e)
         {
             var grid = sender as DataGridView;
+
+            if (grid != null &&
+                e.ColumnIndex >= 0 &&
+                e.ColumnIndex < grid.Columns.Count &&
+                EsColumnaEstatusGuiasEnCortesContraloria(grid.Columns[e.ColumnIndex].Name))
+            {
+                e.ThrowException = false;
+                return;
+            }
+
             var colName = grid?.Columns[e.ColumnIndex]?.Name ?? "(col)";
             var val = grid?.Rows[e.RowIndex]?.Cells[e.ColumnIndex]?.Value;
 
@@ -796,8 +834,11 @@ namespace Administracion_OMAJA
 
         private void AplicarFormatoDataGridViewFacturacionContraloria()
         {
+            ConfigurarComboBoxEstatusGuiasEnCortesContraloria();
             FormatearEncabezadosDataGridViewFacturacionContraloria(dataGridViewContraloria);
             AplicarEstiloAzulClaroDataGridViewFacturacionContraloria(dataGridViewContraloria);
+            ColorearFilasEstatus(dataGridViewContraloria);
+            ColorearCeldasDescuentoContraloria(dataGridViewContraloria);
             ConfigurarEdicionDataGridViewFacturacionContraloria();
             ConfigurarCopiadoDataGridViewFacturacionContraloria();
             AsegurarColumnaObservacionesAuditoriaVisibleContraloria();
@@ -818,7 +859,10 @@ namespace Administracion_OMAJA
 
             foreach (DataGridViewColumn col in dataGridViewContraloria.Columns)
             {
-                bool esEditable = col.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase);
+                bool esEditable =
+                    EsColumnaObservacionesAuditoriaContraloria(col.Name) ||
+                    EsColumnaEstatusGuiasEnCortesContraloria(col.Name);
+
                 col.ReadOnly = !esEditable;
             }
 
@@ -830,6 +874,13 @@ namespace Administracion_OMAJA
                 columnaObservaciones.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
                 columnaObservaciones.SortMode = DataGridViewColumnSortMode.NotSortable;
                 columnaObservaciones.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            }
+
+            if (dataGridViewContraloria.Columns.Contains("Estatus guias en cortes"))
+            {
+                var columnaEstatus = dataGridViewContraloria.Columns["Estatus guias en cortes"];
+                columnaEstatus.Visible = true;
+                columnaEstatus.ReadOnly = false;
             }
         }
 
@@ -1224,7 +1275,9 @@ namespace Administracion_OMAJA
 
         private void CargarFacturacionDesdeBaseContraloria()
         {
-            dataGridViewContraloria.DataSource = dbManager.ObtenerFacturacionContraloria();
+            DataTable datos = dbManager.ObtenerFacturacionContraloria();
+            AplicarOverridesEstatusGuiasEnCortesContraloria(datos);
+            dataGridViewContraloria.DataSource = datos;
             AplicarFormatoDataGridViewFacturacionContraloria();
         }
 
@@ -1358,6 +1411,322 @@ namespace Administracion_OMAJA
             }
 
             return sb.ToString();
+        }
+
+        private static bool EsColumnaEstatusGuiasEnCortesContraloria(string nombreColumna)
+        {
+            return !string.IsNullOrWhiteSpace(nombreColumna) &&
+                   nombreColumna.Equals("Estatus guias en cortes", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsColumnaObservacionesAuditoriaContraloria(string nombreColumna)
+        {
+            return !string.IsNullOrWhiteSpace(nombreColumna) &&
+                   nombreColumna.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void AplicarOverridesEstatusGuiasEnCortesContraloria(DataTable datos)
+        {
+            if (datos == null ||
+                !datos.Columns.Contains("id") ||
+                !datos.Columns.Contains("Estatus guias en cortes"))
+            {
+                return;
+            }
+
+            foreach (DataRow row in datos.Rows)
+            {
+                int id;
+                if (!int.TryParse(Convert.ToString(row["id"] ?? string.Empty, CultureInfo.CurrentCulture), out id))
+                {
+                    continue;
+                }
+
+                string valorOverride;
+                if (overridesEstatusGuiasEnCortesContraloria.TryGetValue(id, out valorOverride))
+                {
+                    row["Estatus guias en cortes"] = valorOverride;
+                }
+            }
+        }
+
+        private void ConfigurarComboBoxEstatusGuiasEnCortesContraloria()
+        {
+            if (configurandoComboEstatusGuiasEnCortesContraloria)
+            {
+                return;
+            }
+
+            if (dataGridViewContraloria == null ||
+                dataGridViewContraloria.Columns.Count == 0 ||
+                !dataGridViewContraloria.Columns.Contains("Estatus guias en cortes"))
+            {
+                return;
+            }
+
+            configurandoComboEstatusGuiasEnCortesContraloria = true;
+
+            try
+            {
+                var columnaActual = dataGridViewContraloria.Columns["Estatus guias en cortes"];
+                int index = columnaActual.Index;
+                string dataPropertyName = string.IsNullOrWhiteSpace(columnaActual.DataPropertyName)
+                    ? columnaActual.Name
+                    : columnaActual.DataPropertyName;
+                string headerText = string.IsNullOrWhiteSpace(columnaActual.HeaderText)
+                    ? columnaActual.Name
+                    : columnaActual.HeaderText;
+                bool visible = columnaActual.Visible;
+
+                if (!(columnaActual is DataGridViewComboBoxColumn))
+                {
+                    dataGridViewContraloria.Columns.Remove(columnaActual);
+
+                    var combo = new DataGridViewComboBoxColumn
+                    {
+                        Name = "Estatus guias en cortes",
+                        DataPropertyName = dataPropertyName,
+                        HeaderText = headerText,
+                        DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+                        DisplayStyleForCurrentCellOnly = true,
+                        FlatStyle = FlatStyle.Flat,
+                        SortMode = DataGridViewColumnSortMode.NotSortable
+                    };
+
+                    dataGridViewContraloria.Columns.Insert(index, combo);
+                }
+
+                var columnaCombo = dataGridViewContraloria.Columns["Estatus guias en cortes"] as DataGridViewComboBoxColumn;
+                if (columnaCombo == null)
+                {
+                    return;
+                }
+
+                columnaCombo.Visible = visible;
+                columnaCombo.DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton;
+                columnaCombo.DisplayStyleForCurrentCellOnly = true;
+                columnaCombo.FlatStyle = FlatStyle.Flat;
+                columnaCombo.MaxDropDownItems = 8;
+
+                var opciones = ObtenerOpcionesDisponiblesEstatusGuiasEnCortesContraloria();
+
+                columnaCombo.Items.Clear();
+                foreach (string opcion in opciones)
+                {
+                    columnaCombo.Items.Add(opcion);
+                }
+
+                foreach (DataGridViewRow row in dataGridViewContraloria.Rows)
+                {
+                    if (!row.IsNewRow)
+                    {
+                        ConfigurarOpcionesCeldaEstatusGuiasEnCortesContraloria(row);
+                    }
+                }
+            }
+            finally
+            {
+                configurandoComboEstatusGuiasEnCortesContraloria = false;
+            }
+        }
+
+        private void ConfigurarOpcionesCeldaEstatusGuiasEnCortesContraloria(DataGridViewRow row)
+        {
+            if (row == null ||
+                row.IsNewRow ||
+                row.DataGridView == null ||
+                !row.DataGridView.Columns.Contains("Estatus guias en cortes"))
+            {
+                return;
+            }
+
+            var cell = row.Cells["Estatus guias en cortes"] as DataGridViewComboBoxCell;
+            if (cell == null)
+            {
+                return;
+            }
+
+            cell.DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton;
+            cell.FlatStyle = FlatStyle.Flat;
+        }
+
+
+        private void dataGridViewContraloria_CellClickEstatusGuiasEnCortesContraloria(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            var columna = grid.Columns[e.ColumnIndex];
+            if (columna == null || !EsColumnaEstatusGuiasEnCortesContraloria(columna.Name))
+            {
+                return;
+            }
+
+            grid.CurrentCell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+            grid.BeginEdit(true);
+
+            BeginInvoke((Action)(() =>
+            {
+                var combo = grid.EditingControl as ComboBox;
+                if (combo != null)
+                {
+                    combo.DroppedDown = true;
+                }
+            }));
+        }
+
+        private void dataGridViewContraloria_CurrentCellDirtyStateChangedEstatusGuiasEnCortesContraloria(object sender, EventArgs e)
+        {
+            var grid = sender as DataGridView;
+            if (grid == null || !grid.IsCurrentCellDirty || grid.CurrentCell == null)
+            {
+                return;
+            }
+
+            if (!EsColumnaEstatusGuiasEnCortesContraloria(grid.CurrentCell.OwningColumn?.Name))
+            {
+                return;
+            }
+
+            grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+
+        private void dataGridViewContraloria_CellValueChangedEstatusGuiasEnCortesContraloria(object sender, DataGridViewCellEventArgs e)
+        {
+            if (configurandoComboEstatusGuiasEnCortesContraloria || e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            var grid = sender as DataGridView;
+            if (grid == null)
+            {
+                return;
+            }
+
+            var columna = grid.Columns[e.ColumnIndex];
+            if (columna == null || !EsColumnaEstatusGuiasEnCortesContraloria(columna.Name))
+            {
+                return;
+            }
+
+            var row = grid.Rows[e.RowIndex];
+
+            if (!grid.Columns.Contains("id"))
+            {
+                return;
+            }
+
+            int id;
+            if (!int.TryParse(Convert.ToString(row.Cells["id"]?.Value ?? string.Empty, CultureInfo.CurrentCulture), out id))
+            {
+                return;
+            }
+
+            string valor = Convert.ToString(row.Cells[columna.Name]?.Value ?? string.Empty, CultureInfo.CurrentCulture).Trim();
+
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                overridesEstatusGuiasEnCortesContraloria.Remove(id);
+            }
+            else
+            {
+                overridesEstatusGuiasEnCortesContraloria[id] = valor;
+            }
+        }
+
+        private List<string> ObtenerOpcionesDisponiblesEstatusGuiasEnCortesContraloria()
+        {
+            var opciones = new List<string>();
+            var existentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (string opcion in opcionesManualEstatusGuiasEnCortesContraloria)
+            {
+                if (!string.IsNullOrWhiteSpace(opcion) && existentes.Add(opcion))
+                {
+                    opciones.Add(opcion);
+                }
+            }
+
+            if (dataGridViewContraloria != null &&
+                dataGridViewContraloria.Columns.Contains("Estatus guias en cortes"))
+            {
+                foreach (DataGridViewRow row in dataGridViewContraloria.Rows)
+                {
+                    if (row == null || row.IsNewRow)
+                    {
+                        continue;
+                    }
+
+                    string valorActual = Convert.ToString(
+                        row.Cells["Estatus guias en cortes"]?.Value ?? string.Empty,
+                        CultureInfo.CurrentCulture).Trim();
+
+                    if (!string.IsNullOrWhiteSpace(valorActual) && existentes.Add(valorActual))
+                    {
+                        opciones.Add(valorActual);
+                    }
+                }
+            }
+
+            return opciones;
+        }
+        private void ColorearCeldasDescuentoContraloria(DataGridView dgv)
+        {
+            if (dgv?.Rows == null)
+            {
+                return;
+            }
+
+            string nombreColumnaDescuento = dgv.Columns.Contains("descuento")
+                ? "descuento"
+                : dgv.Columns.Contains("Descuento")
+                    ? "Descuento"
+                    : null;
+
+            if (nombreColumnaDescuento == null)
+            {
+                return;
+            }
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                var cell = row.Cells[nombreColumnaDescuento];
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                decimal descuento;
+                bool esNumero =
+                    decimal.TryParse(Convert.ToString(cell.Value ?? string.Empty, CultureInfo.CurrentCulture), NumberStyles.Any, CultureInfo.CurrentCulture, out descuento) ||
+                    decimal.TryParse(Convert.ToString(cell.Value ?? string.Empty, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out descuento);
+
+                if (!esNumero || descuento <= 0m)
+                {
+                    cell.Style.BackColor = dgv.DefaultCellStyle.BackColor;
+                    cell.Style.SelectionBackColor = dgv.DefaultCellStyle.SelectionBackColor;
+                    cell.Style.SelectionForeColor = dgv.DefaultCellStyle.SelectionForeColor;
+                    continue;
+                }
+
+                cell.Style.BackColor = colorDescuentoContraloria;
+                cell.Style.SelectionBackColor = ControlPaint.Dark(colorDescuentoContraloria);
+                cell.Style.SelectionForeColor = Color.Black;
+            }
         }
     }
 }
