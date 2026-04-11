@@ -29,10 +29,6 @@ namespace Administracion_OMAJA
             return !string.IsNullOrWhiteSpace(destino) && !destino.Equals("TODAS", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool DebeFiltrarOrigen(string origen)
-        {
-            return !string.IsNullOrWhiteSpace(origen) && !origen.Equals("TODAS", StringComparison.OrdinalIgnoreCase);
-        }
 
         private DataTable EjecutarConsultaGuias(DateTime fechaInicio, DateTime fechaFin, string sucursal, string destino, string condicionExtra = null, Action<MySqlCommand> configureCondicion = null)
         {
@@ -1271,6 +1267,8 @@ namespace Administracion_OMAJA
             return origen.TryGetValue(clave, out valor) ? valor : null;
         }
 
+
+
         public (int nuevos, int actualizados) ImportarDesdeExcel(string filePath, DataGridView dataGridView, Action<int, int> reportProgress)
         {
             try
@@ -2151,6 +2149,64 @@ namespace Administracion_OMAJA
             }
         }
 
+
+        public DataTable ObtenerGuiasPorFoliosBusquedaContraloria(IEnumerable<string> folios)
+        {
+            var dt = new DataTable();
+
+            if (folios == null)
+            {
+                return dt;
+            }
+
+            var listaFolios = folios
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .Select(f => f.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (listaFolios.Count == 0)
+            {
+                return dt;
+            }
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+
+                var query = new StringBuilder("SELECT * FROM guias WHERE FolioGuia IN (");
+
+                for (int i = 0; i < listaFolios.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        query.Append(", ");
+                    }
+
+                    query.Append("@folio").Append(i.ToString(CultureInfo.InvariantCulture));
+                }
+
+                query.Append(") ORDER BY FechaElaboracion DESC");
+
+                using (var cmd = new MySqlCommand(query.ToString(), conn))
+                {
+                    for (int i = 0; i < listaFolios.Count; i++)
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@folio" + i.ToString(CultureInfo.InvariantCulture),
+                            listaFolios[i]);
+                    }
+
+                    using (var adapter = new MySqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
         private static object ObtenerValorColumnaFacturacionContraloria(DataRow row, params string[] nombres)
         {
             if (row == null || row.Table == null)
@@ -2566,4 +2622,19 @@ internal sealed class ClienteEstadisticas
     public decimal MontoCanceladas { get; set; }
     public int PaquetesEnviados { get; set; }
     public List<(string Destino, int TotalCajas)> Destinos { get; } = new List<(string Destino, int TotalCajas)>();
+}
+
+internal class Contraloria
+{
+    private readonly string _connectionString = "Server=localhost;Database=adminomaja;Uid=root;Pwd=omaja123;Port=3306;";
+
+    private readonly Dictionary<int, string> overridesBusquedaEnCortesContraloria = new Dictionary<int, string>();
+    private readonly Dictionary<int, string> overridesObservacionesAuditoriaContraloria = new Dictionary<int, string>();
+
+    private readonly string rutaEstadoLocalContraloria = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Administracion_OMAJA",
+        "contraloria.estado.local.json");
+
+    // Otros métodos y propiedades de la clase Contraloria
 }

@@ -12,3 +12,4 @@
   - checkBox5=EstatusGuia 'Entregada' (buscando solo en la columna EstatusGuia con el valor 'Entregada'); 
   - checkBox6=Factura 'Facturada' (filtrar guías cuya columna Factura contiene un dato); 
   - checkBox7=Factura 'No facturada' (filtrar guías cuya columna Factura está vacía o nula). Estos filtros deben ser ejecutados desde buttonFiltrarTipodeCobro y usar consulta SQL exacta sobre la tabla Guias.
+- En Contraloria no se debe destruir la funcionalidad existente de filtros con checkboxes y DateTimePicker; los cambios nuevos deben agregarse sin afectar esos filtros.

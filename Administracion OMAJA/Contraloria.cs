@@ -51,6 +51,9 @@ namespace Administracion_OMAJA
 
         private readonly Dictionary<int, string> overridesEstatusGuiasEnCortesContraloria = new Dictionary<int, string>();
 
+        private readonly Dictionary<int, string> overridesBusquedaEnCortesContraloria = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> overridesObservacionesAuditoriaContraloria = new Dictionary<int, string>();
+
         private static readonly string[] opcionesManualEstatusGuiasEnCortesContraloria =
         {
             "Faltante.",
@@ -63,6 +66,11 @@ namespace Administracion_OMAJA
 
         private bool configurandoComboEstatusGuiasEnCortesContraloria;
 
+        private readonly string rutaEstadoLocalContraloria = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Administracion_OMAJA",
+            "contraloria.estado.local.json");
+
         public Contraloria()
         {
             InitializeComponent();
@@ -72,7 +80,7 @@ namespace Administracion_OMAJA
             CargarFacturacionDesdeBaseContraloria();
         }
 
-        private void InicializarEventos()
+            private void InicializarEventos()
         {
             toolStripBusqueda.Click += toolStripBusqueda_Click;
             toolStripButtoiniciarbusqueda.Click += toolStripButtoiniciarbusqueda_Click;
@@ -108,6 +116,8 @@ namespace Administracion_OMAJA
             dataGridViewContraloria.KeyDown += dataGridViewContraloria_KeyDownCopiarContraloria;
             dataGridViewContraloria.RowHeadersWidth = 56;
             dataGridViewContraloria.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            this.FormClosing += Contraloria_FormClosingPersistenciaLocalContraloria;
         }
 
         private void InicializarBarraProgresoImportacion()
@@ -841,6 +851,7 @@ namespace Administracion_OMAJA
             ColorearCeldasDescuentoContraloria(dataGridViewContraloria);
             ConfigurarEdicionDataGridViewFacturacionContraloria();
             ConfigurarCopiadoDataGridViewFacturacionContraloria();
+            AsegurarColumnaBusquedaEnCortesVisibleContraloria();
             AsegurarColumnaObservacionesAuditoriaVisibleContraloria();
         }
 
@@ -861,7 +872,8 @@ namespace Administracion_OMAJA
             {
                 bool esEditable =
                     EsColumnaObservacionesAuditoriaContraloria(col.Name) ||
-                    EsColumnaEstatusGuiasEnCortesContraloria(col.Name);
+                    EsColumnaEstatusGuiasEnCortesContraloria(col.Name) ||
+                    EsColumnaBusquedaEnCortesContraloria(col.Name);
 
                 col.ReadOnly = !esEditable;
             }
@@ -874,6 +886,16 @@ namespace Administracion_OMAJA
                 columnaObservaciones.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
                 columnaObservaciones.SortMode = DataGridViewColumnSortMode.NotSortable;
                 columnaObservaciones.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            }
+
+            if (dataGridViewContraloria.Columns.Contains("Busqueda en cortes"))
+            {
+                var columnaBusqueda = dataGridViewContraloria.Columns["Busqueda en cortes"];
+                columnaBusqueda.Visible = true;
+                columnaBusqueda.ReadOnly = false;
+                columnaBusqueda.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+                columnaBusqueda.SortMode = DataGridViewColumnSortMode.NotSortable;
+                columnaBusqueda.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
             }
 
             if (dataGridViewContraloria.Columns.Contains("Estatus guias en cortes"))
@@ -901,6 +923,30 @@ namespace Administracion_OMAJA
             columna.Visible = true;
             columna.ReadOnly = false;
             columna.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            columna.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+            if (columna.AutoSizeMode != DataGridViewAutoSizeColumnMode.DisplayedCells)
+            {
+                columna.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            }
+        }
+
+        private void AsegurarColumnaBusquedaEnCortesVisibleContraloria()
+        {
+            if (dataGridViewContraloria == null || dataGridViewContraloria.Columns.Count == 0)
+            {
+                return;
+            }
+
+            if (!dataGridViewContraloria.Columns.Contains("Busqueda en cortes"))
+            {
+                return;
+            }
+
+            var columna = dataGridViewContraloria.Columns["Busqueda en cortes"];
+            columna.Visible = true;
+            columna.ReadOnly = false;
+            columna.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
             columna.SortMode = DataGridViewColumnSortMode.NotSortable;
 
             if (columna.AutoSizeMode != DataGridViewAutoSizeColumnMode.DisplayedCells)
@@ -979,7 +1025,16 @@ namespace Administracion_OMAJA
             }
 
             var columna = grid.Columns[e.ColumnIndex];
-            if (columna == null || !columna.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase))
+            if (columna == null)
+            {
+                return;
+            }
+
+            bool esEditable =
+                EsColumnaObservacionesAuditoriaContraloria(columna.Name) ||
+                EsColumnaBusquedaEnCortesContraloria(columna.Name);
+
+            if (!esEditable)
             {
                 return;
             }
@@ -1002,12 +1057,21 @@ namespace Administracion_OMAJA
             }
 
             var columna = grid.Columns[e.ColumnIndex];
-            if (columna == null || !columna.Name.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase))
+            if (columna == null)
             {
                 return;
             }
 
-            GuardarObservacionesAuditoriaDataGridViewContraloria(grid.Rows[e.RowIndex]);
+            if (EsColumnaObservacionesAuditoriaContraloria(columna.Name))
+            {
+                GuardarObservacionesAuditoriaDataGridViewContraloria(grid.Rows[e.RowIndex]);
+                return;
+            }
+
+            if (EsColumnaBusquedaEnCortesContraloria(columna.Name))
+            {
+                GuardarBusquedaEnCortesDataGridViewContraloria(grid.Rows[e.RowIndex]);
+            }
         }
 
         private void GuardarObservacionesAuditoriaDataGridViewContraloria(DataGridViewRow row)
@@ -1017,18 +1081,8 @@ namespace Administracion_OMAJA
                 return;
             }
 
-            if (!row.DataGridView.Columns.Contains("id"))
-            {
-                MessageBox.Show(
-                    "No se encontró la columna Id para guardar observaciones de auditoría.",
-                    "Dato faltante",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
             int id;
-            if (!int.TryParse(Convert.ToString(row.Cells["id"]?.Value ?? string.Empty, CultureInfo.CurrentCulture), out id))
+            if (!ObtenerIdFilaContraloria(row, out id))
             {
                 MessageBox.Show(
                     "No se pudo identificar el Id del registro para guardar observaciones de auditoría.",
@@ -1042,15 +1096,51 @@ namespace Administracion_OMAJA
                 ? Convert.ToString(row.Cells["Observaciones de auditoria"]?.Value ?? string.Empty)
                 : string.Empty;
 
-            bool ok = dbManager.ActualizarObservacionesAuditoriaContraloria(id, observaciones);
-            if (!ok)
+            if (string.IsNullOrWhiteSpace(observaciones))
+            {
+                overridesObservacionesAuditoriaContraloria.Remove(id);
+            }
+            else
+            {
+                overridesObservacionesAuditoriaContraloria[id] = observaciones;
+            }
+
+            GuardarEstadoLocalEnJsonContraloria();
+        }
+
+        private void GuardarBusquedaEnCortesDataGridViewContraloria(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow || row.DataGridView == null)
+            {
+                return;
+            }
+
+            int id;
+            if (!ObtenerIdFilaContraloria(row, out id))
             {
                 MessageBox.Show(
-                    "No se pudieron guardar las observaciones de auditoría.",
-                    "Error",
+                    "No se pudo identificar el Id del registro para guardar búsqueda en cortes.",
+                    "Dato inválido",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    MessageBoxIcon.Warning);
+                return;
             }
+
+            string busqueda = row.DataGridView.Columns.Contains("Busqueda en cortes")
+                ? Convert.ToString(row.Cells["Busqueda en cortes"]?.Value ?? string.Empty)
+                : string.Empty;
+
+            if (string.IsNullOrWhiteSpace(busqueda))
+            {
+                overridesBusquedaEnCortesContraloria.Remove(id);
+            }
+            else
+            {
+                overridesBusquedaEnCortesContraloria[id] = busqueda.Trim();
+            }
+
+            GuardarEstadoLocalEnJsonContraloria();
+            CargarGuiasDesdeBusquedaEnCortesContraloria();
         }
 
         private void FormatearEncabezadosDataGridViewFacturacionContraloria(DataGridView dgv)
@@ -1254,9 +1344,13 @@ namespace Administracion_OMAJA
             {
                 if (dbManager.TruncarCortesContraloria())
                 {
+                    LimpiarEstadoLocalPersistenciaContraloria();
+
                     dataGridViewContraloria.DataSource = null;
+                    dataGridViewPrincipal.DataSource = null;
+
                     MessageBox.Show(
-                        "Todos los registros de facturación fueron eliminados.",
+                        "Todos los registros de facturación fueron eliminados y la persistencia local fue reiniciada.",
                         "Operación completada",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
@@ -1276,9 +1370,12 @@ namespace Administracion_OMAJA
         private void CargarFacturacionDesdeBaseContraloria()
         {
             DataTable datos = dbManager.ObtenerFacturacionContraloria();
-            AplicarOverridesEstatusGuiasEnCortesContraloria(datos);
+            AsegurarColumnasLocalesContraloria(datos);
+            CargarEstadoLocalDesdeJsonContraloria();
+            AplicarEstadoLocalColumnasContraloria(datos);
             dataGridViewContraloria.DataSource = datos;
             AplicarFormatoDataGridViewFacturacionContraloria();
+            CargarGuiasDesdeBusquedaEnCortesContraloria();
         }
 
         private void buttonFiltrarFacturadoContraloria_Click(object sender, EventArgs e)
@@ -1423,6 +1520,12 @@ namespace Administracion_OMAJA
         {
             return !string.IsNullOrWhiteSpace(nombreColumna) &&
                    nombreColumna.Equals("Observaciones de auditoria", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsColumnaBusquedaEnCortesContraloria(string nombreColumna)
+        {
+            return !string.IsNullOrWhiteSpace(nombreColumna) &&
+                   nombreColumna.Equals("Busqueda en cortes", StringComparison.OrdinalIgnoreCase);
         }
 
         private void AplicarOverridesEstatusGuiasEnCortesContraloria(DataTable datos)
@@ -1620,13 +1723,8 @@ namespace Administracion_OMAJA
 
             var row = grid.Rows[e.RowIndex];
 
-            if (!grid.Columns.Contains("id"))
-            {
-                return;
-            }
-
             int id;
-            if (!int.TryParse(Convert.ToString(row.Cells["id"]?.Value ?? string.Empty, CultureInfo.CurrentCulture), out id))
+            if (!ObtenerIdFilaContraloria(row, out id))
             {
                 return;
             }
@@ -1641,6 +1739,9 @@ namespace Administracion_OMAJA
             {
                 overridesEstatusGuiasEnCortesContraloria[id] = valor;
             }
+
+            GuardarEstadoLocalEnJsonContraloria();
+            ColorearFilasEstatus(dataGridViewContraloria);
         }
 
         private List<string> ObtenerOpcionesDisponiblesEstatusGuiasEnCortesContraloria()
@@ -1728,5 +1829,360 @@ namespace Administracion_OMAJA
                 cell.Style.SelectionForeColor = Color.Black;
             }
         }
+        
+        private void AsegurarColumnasLocalesContraloria(DataTable datos)
+        {
+            if (datos == null)
+            {
+                return;
+            }
+
+            if (!datos.Columns.Contains("Estatus guias en cortes"))
+            {
+                datos.Columns.Add("Estatus guias en cortes", typeof(string));
+            }
+
+            if (!datos.Columns.Contains("Busqueda en cortes"))
+            {
+                datos.Columns.Add("Busqueda en cortes", typeof(string));
+            }
+
+            if (!datos.Columns.Contains("Observaciones de auditoria"))
+            {
+                datos.Columns.Add("Observaciones de auditoria", typeof(string));
+            }
+        }
+
+        private void CargarEstadoLocalDesdeJsonContraloria()
+        {
+            overridesEstatusGuiasEnCortesContraloria.Clear();
+            overridesBusquedaEnCortesContraloria.Clear();
+            overridesObservacionesAuditoriaContraloria.Clear();
+
+            try
+            {
+                if (!File.Exists(rutaEstadoLocalContraloria))
+                {
+                    return;
+                }
+
+                string json = File.ReadAllText(rutaEstadoLocalContraloria, Encoding.UTF8);
+                var items = JsonConvert.DeserializeObject<List<EstadoLocalFilaContraloria>>(json);
+
+                if (items == null)
+                {
+                    return;
+                }
+
+                foreach (var item in items)
+                {
+                    if (item == null || item.Id <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(item.EstatusGuiasEnCortes))
+                    {
+                        overridesEstatusGuiasEnCortesContraloria[item.Id] = item.EstatusGuiasEnCortes;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(item.BusquedaEnCortes))
+                    {
+                        overridesBusquedaEnCortesContraloria[item.Id] = item.BusquedaEnCortes;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(item.ObservacionesAuditoria))
+                    {
+                        overridesObservacionesAuditoriaContraloria[item.Id] = item.ObservacionesAuditoria;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "No se pudo cargar el estado local de Contraloria.\n" + ex.Message,
+                    "Persistencia local",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private void AplicarEstadoLocalColumnasContraloria(DataTable datos)
+        {
+            if (datos == null || !datos.Columns.Contains("id"))
+            {
+                return;
+            }
+
+            foreach (DataRow row in datos.Rows)
+            {
+                int id;
+                if (!int.TryParse(Convert.ToString(row["id"] ?? string.Empty, CultureInfo.CurrentCulture), out id))
+                {
+                    continue;
+                }
+
+                string valorEstatus;
+                if (overridesEstatusGuiasEnCortesContraloria.TryGetValue(id, out valorEstatus))
+                {
+                    row["Estatus guias en cortes"] = valorEstatus;
+                }
+
+                string valorBusqueda;
+                if (overridesBusquedaEnCortesContraloria.TryGetValue(id, out valorBusqueda))
+                {
+                    row["Busqueda en cortes"] = valorBusqueda;
+                }
+
+                string valorObservaciones;
+                if (overridesObservacionesAuditoriaContraloria.TryGetValue(id, out valorObservaciones))
+                {
+                    row["Observaciones de auditoria"] = valorObservaciones;
+                }
+            }
+        }
+
+        private void GuardarEstadoLocalEnJsonContraloria()
+        {
+            try
+            {
+                string directorio = Path.GetDirectoryName(rutaEstadoLocalContraloria);
+                if (!string.IsNullOrWhiteSpace(directorio))
+                {
+                    Directory.CreateDirectory(directorio);
+                }
+
+                var ids = new HashSet<int>();
+
+                foreach (var id in overridesEstatusGuiasEnCortesContraloria.Keys)
+                {
+                    ids.Add(id);
+                }
+
+                foreach (var id in overridesBusquedaEnCortesContraloria.Keys)
+                {
+                    ids.Add(id);
+                }
+
+                foreach (var id in overridesObservacionesAuditoriaContraloria.Keys)
+                {
+                    ids.Add(id);
+                }
+
+                var items = new List<EstadoLocalFilaContraloria>();
+
+                foreach (int id in ids.OrderBy(x => x))
+                {
+                    string estatus;
+                    string busqueda;
+                    string observaciones;
+
+                    overridesEstatusGuiasEnCortesContraloria.TryGetValue(id, out estatus);
+                    overridesBusquedaEnCortesContraloria.TryGetValue(id, out busqueda);
+                    overridesObservacionesAuditoriaContraloria.TryGetValue(id, out observaciones);
+
+                    items.Add(new EstadoLocalFilaContraloria
+                    {
+                        Id = id,
+                        EstatusGuiasEnCortes = estatus,
+                        BusquedaEnCortes = busqueda,
+                        ObservacionesAuditoria = observaciones
+                    });
+                }
+
+                string json = JsonConvert.SerializeObject(items, Formatting.Indented);
+                File.WriteAllText(rutaEstadoLocalContraloria, json, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "No se pudo guardar el estado local de Contraloria.\n" + ex.Message,
+                    "Persistencia local",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private bool ObtenerIdFilaContraloria(DataGridViewRow row, out int id)
+        {
+            id = 0;
+
+            if (row == null || row.DataGridView == null || !row.DataGridView.Columns.Contains("id"))
+            {
+                return false;
+            }
+
+            return int.TryParse(
+                Convert.ToString(row.Cells["id"]?.Value ?? string.Empty, CultureInfo.CurrentCulture),
+                out id);
+        }
+
+        private void CapturarEstadoActualGridContraloria()
+        {
+            if (dataGridViewContraloria == null || dataGridViewContraloria.Rows == null)
+            {
+                return;
+            }
+
+            foreach (DataGridViewRow row in dataGridViewContraloria.Rows)
+            {
+                if (row == null || row.IsNewRow)
+                {
+                    continue;
+                }
+
+                int id;
+                if (!ObtenerIdFilaContraloria(row, out id))
+                {
+                    continue;
+                }
+
+                string estatus = dataGridViewContraloria.Columns.Contains("Estatus guias en cortes")
+                    ? Convert.ToString(row.Cells["Estatus guias en cortes"]?.Value ?? string.Empty).Trim()
+                    : string.Empty;
+
+                string busqueda = dataGridViewContraloria.Columns.Contains("Busqueda en cortes")
+                    ? Convert.ToString(row.Cells["Busqueda en cortes"]?.Value ?? string.Empty).Trim()
+                    : string.Empty;
+
+                string observaciones = dataGridViewContraloria.Columns.Contains("Observaciones de auditoria")
+                    ? Convert.ToString(row.Cells["Observaciones de auditoria"]?.Value ?? string.Empty)
+                    : string.Empty;
+
+                if (string.IsNullOrWhiteSpace(estatus))
+                {
+                    overridesEstatusGuiasEnCortesContraloria.Remove(id);
+                }
+                else
+                {
+                    overridesEstatusGuiasEnCortesContraloria[id] = estatus;
+                }
+
+                if (string.IsNullOrWhiteSpace(busqueda))
+                {
+                    overridesBusquedaEnCortesContraloria.Remove(id);
+                }
+                else
+                {
+                    overridesBusquedaEnCortesContraloria[id] = busqueda;
+                }
+
+                if (string.IsNullOrWhiteSpace(observaciones))
+                {
+                    overridesObservacionesAuditoriaContraloria.Remove(id);
+                }
+                else
+                {
+                    overridesObservacionesAuditoriaContraloria[id] = observaciones;
+                }
+            }
+        }
+
+        private void Contraloria_FormClosingPersistenciaLocalContraloria(object sender, FormClosingEventArgs e)
+        {
+            if (dataGridViewContraloria != null && dataGridViewContraloria.IsCurrentCellInEditMode)
+            {
+                dataGridViewContraloria.EndEdit();
+            }
+
+            CapturarEstadoActualGridContraloria();
+            GuardarEstadoLocalEnJsonContraloria();
+        }
+
+        private sealed class EstadoLocalFilaContraloria
+        {
+            public int Id { get; set; }
+            public string EstatusGuiasEnCortes { get; set; }
+            public string BusquedaEnCortes { get; set; }
+            public string ObservacionesAuditoria { get; set; }
+        }
+
+        private List<string> ObtenerFoliosBusquedaEnCortesContraloria()
+        {
+            var folios = new List<string>();
+            var existentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (dataGridViewContraloria == null ||
+                dataGridViewContraloria.Rows == null ||
+                !dataGridViewContraloria.Columns.Contains("Busqueda en cortes"))
+            {
+                return folios;
+            }
+
+            foreach (DataGridViewRow row in dataGridViewContraloria.Rows)
+            {
+                if (row == null || row.IsNewRow)
+                {
+                    continue;
+                }
+
+                string valor = Convert.ToString(
+                    row.Cells["Busqueda en cortes"]?.Value ?? string.Empty,
+                    CultureInfo.CurrentCulture).Trim();
+
+                if (string.IsNullOrWhiteSpace(valor))
+                {
+                    continue;
+                }
+
+                if (existentes.Add(valor))
+                {
+                    folios.Add(valor);
+                }
+            }
+
+            return folios;
+        }
+
+        private void CargarGuiasDesdeBusquedaEnCortesContraloria()
+        {
+            var folios = ObtenerFoliosBusquedaEnCortesContraloria();
+
+            if (folios.Count == 0)
+            {
+                dataGridViewPrincipal.DataSource = null;
+                return;
+            }
+
+            DataTable datos = dbManager.ObtenerGuiasPorFoliosBusquedaContraloria(folios);
+
+            if (datos == null || datos.Rows.Count == 0)
+            {
+                dataGridViewPrincipal.DataSource = null;
+                return;
+            }
+
+            CargarGuiasEnGrid(OrdenarResultadoGuias(datos));
+        }
+
+        private void LimpiarEstadoLocalPersistenciaContraloria()
+{
+    overridesEstatusGuiasEnCortesContraloria.Clear();
+    overridesBusquedaEnCortesContraloria.Clear();
+    overridesObservacionesAuditoriaContraloria.Clear();
+
+    try
+    {
+        string directorio = Path.GetDirectoryName(rutaEstadoLocalContraloria);
+        if (!string.IsNullOrWhiteSpace(directorio))
+        {
+            Directory.CreateDirectory(directorio);
+        }
+
+        string json = JsonConvert.SerializeObject(
+            new List<EstadoLocalFilaContraloria>(),
+            Formatting.Indented);
+
+        File.WriteAllText(rutaEstadoLocalContraloria, json, Encoding.UTF8);
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show(
+            "No se pudo limpiar la persistencia local de Contraloria.\n" + ex.Message,
+            "Persistencia local",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning);
+    }
+}
     }
 }
