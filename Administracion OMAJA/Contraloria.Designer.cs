@@ -53,18 +53,18 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupFiltros = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.buttonFiltrarFacturado = new System.Windows.Forms.Button();
-            this.checkBox5 = new System.Windows.Forms.CheckBox();
-            this.checkBox4 = new System.Windows.Forms.CheckBox();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.checkBox7 = new System.Windows.Forms.CheckBox();
             this.checkBox6 = new System.Windows.Forms.CheckBox();
+            this.checkBox7 = new System.Windows.Forms.CheckBox();
+            this.buttonFiltrarFacturado = new System.Windows.Forms.Button();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.dataGridViewEstadisticasRapidas = new System.Windows.Forms.DataGridView();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.buttonFiltrarTipodeCobro = new System.Windows.Forms.Button();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.checkBox5 = new System.Windows.Forms.CheckBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.checkBox4 = new System.Windows.Forms.CheckBox();
             this.labelSucursalDestino = new System.Windows.Forms.Label();
             this.comboBoxSucursalDestino = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -83,7 +83,7 @@
             this.groupFiltros.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEstadisticasRapidas)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPrincipal)).BeginInit();
@@ -305,6 +305,26 @@
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Facturado";
             // 
+            // checkBox6
+            // 
+            this.checkBox6.AutoSize = true;
+            this.checkBox6.Location = new System.Drawing.Point(6, 19);
+            this.checkBox6.Name = "checkBox6";
+            this.checkBox6.Size = new System.Drawing.Size(74, 17);
+            this.checkBox6.TabIndex = 3;
+            this.checkBox6.Text = "Facturada";
+            this.checkBox6.UseVisualStyleBackColor = true;
+            // 
+            // checkBox7
+            // 
+            this.checkBox7.AutoSize = true;
+            this.checkBox7.Location = new System.Drawing.Point(108, 19);
+            this.checkBox7.Name = "checkBox7";
+            this.checkBox7.Size = new System.Drawing.Size(91, 17);
+            this.checkBox7.TabIndex = 3;
+            this.checkBox7.Text = "No Facturada";
+            this.checkBox7.UseVisualStyleBackColor = true;
+            // 
             // buttonFiltrarFacturado
             // 
             this.buttonFiltrarFacturado.Location = new System.Drawing.Point(62, 77);
@@ -314,29 +334,9 @@
             this.buttonFiltrarFacturado.Text = "Filtrar";
             this.buttonFiltrarFacturado.UseVisualStyleBackColor = true;
             // 
-            // checkBox5
-            // 
-            this.checkBox5.AutoSize = true;
-            this.checkBox5.Location = new System.Drawing.Point(118, 52);
-            this.checkBox5.Name = "checkBox5";
-            this.checkBox5.Size = new System.Drawing.Size(75, 17);
-            this.checkBox5.TabIndex = 1;
-            this.checkBox5.Text = "Entregada";
-            this.checkBox5.UseVisualStyleBackColor = true;
-            // 
-            // checkBox4
-            // 
-            this.checkBox4.AutoSize = true;
-            this.checkBox4.Location = new System.Drawing.Point(118, 19);
-            this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(82, 17);
-            this.checkBox4.TabIndex = 0;
-            this.checkBox4.Text = "Completado";
-            this.checkBox4.UseVisualStyleBackColor = true;
-            // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.dataGridView2);
+            this.groupBox3.Controls.Add(this.dataGridViewEstadisticasRapidas);
             this.groupBox3.Location = new System.Drawing.Point(6, 129);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(484, 250);
@@ -344,13 +344,13 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Estadisticas Rapidas";
             // 
-            // dataGridView2
+            // dataGridViewEstadisticasRapidas
             // 
-            this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(6, 19);
-            this.dataGridView2.Name = "dataGridView2";
-            this.dataGridView2.Size = new System.Drawing.Size(472, 225);
-            this.dataGridView2.TabIndex = 0;
+            this.dataGridViewEstadisticasRapidas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewEstadisticasRapidas.Location = new System.Drawing.Point(6, 19);
+            this.dataGridViewEstadisticasRapidas.Name = "dataGridViewEstadisticasRapidas";
+            this.dataGridViewEstadisticasRapidas.Size = new System.Drawing.Size(472, 225);
+            this.dataGridViewEstadisticasRapidas.TabIndex = 0;
             // 
             // groupBox2
             // 
@@ -366,26 +366,6 @@
             this.groupBox2.TabIndex = 0;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Tipo de Cobro y Estatus Guia";
-            // 
-            // checkBox7
-            // 
-            this.checkBox7.AutoSize = true;
-            this.checkBox7.Location = new System.Drawing.Point(108, 19);
-            this.checkBox7.Name = "checkBox7";
-            this.checkBox7.Size = new System.Drawing.Size(91, 17);
-            this.checkBox7.TabIndex = 3;
-            this.checkBox7.Text = "No Facturada";
-            this.checkBox7.UseVisualStyleBackColor = true;
-            // 
-            // checkBox6
-            // 
-            this.checkBox6.AutoSize = true;
-            this.checkBox6.Location = new System.Drawing.Point(6, 19);
-            this.checkBox6.Name = "checkBox6";
-            this.checkBox6.Size = new System.Drawing.Size(74, 17);
-            this.checkBox6.TabIndex = 3;
-            this.checkBox6.Text = "Facturada";
-            this.checkBox6.UseVisualStyleBackColor = true;
             // 
             // buttonFiltrarTipodeCobro
             // 
@@ -416,6 +396,16 @@
             this.checkBox2.Text = "Por Cobrar";
             this.checkBox2.UseVisualStyleBackColor = true;
             // 
+            // checkBox5
+            // 
+            this.checkBox5.AutoSize = true;
+            this.checkBox5.Location = new System.Drawing.Point(118, 52);
+            this.checkBox5.Name = "checkBox5";
+            this.checkBox5.Size = new System.Drawing.Size(75, 17);
+            this.checkBox5.TabIndex = 1;
+            this.checkBox5.Text = "Entregada";
+            this.checkBox5.UseVisualStyleBackColor = true;
+            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
@@ -425,6 +415,16 @@
             this.checkBox1.TabIndex = 0;
             this.checkBox1.Text = "Pagado";
             this.checkBox1.UseVisualStyleBackColor = true;
+            // 
+            // checkBox4
+            // 
+            this.checkBox4.AutoSize = true;
+            this.checkBox4.Location = new System.Drawing.Point(118, 19);
+            this.checkBox4.Name = "checkBox4";
+            this.checkBox4.Size = new System.Drawing.Size(82, 17);
+            this.checkBox4.TabIndex = 0;
+            this.checkBox4.Text = "Completado";
+            this.checkBox4.UseVisualStyleBackColor = true;
             // 
             // labelSucursalDestino
             // 
@@ -584,7 +584,7 @@
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             this.groupBox3.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEstadisticasRapidas)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox5.ResumeLayout(false);
@@ -628,7 +628,7 @@
         private System.Windows.Forms.GroupBox groupFiltros;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.DataGridView dataGridView2;
+        private System.Windows.Forms.DataGridView dataGridViewEstadisticasRapidas;
         private MySql.Data.MySqlClient.MySqlDataAdapter mySqlDataAdapter1;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button buttonFiltrarFacturado;

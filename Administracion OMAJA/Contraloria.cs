@@ -195,6 +195,7 @@ namespace Administracion_OMAJA
                             {
                                 toolStripProgressBarImportacion.Value = 100;
                                 AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+                                ActualizarEstadisticasRapidasContraloria();
                                 OcultarBarraProgresoImportacion();
 
                                 MessageBox.Show(
@@ -255,6 +256,7 @@ namespace Administracion_OMAJA
             else
             {
                 dataGridViewPrincipal.DataSource = null;
+                ActualizarEstadisticasRapidasContraloria();
                 MessageBox.Show("No se encontró el folio especificado.", "Sin resultados",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -309,6 +311,7 @@ namespace Administracion_OMAJA
             else
             {
                 dataGridViewPrincipal.DataSource = null;
+                ActualizarEstadisticasRapidasContraloria();
                 MessageBox.Show("No se encontraron guías con la factura indicada.", "Sin resultados",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -377,12 +380,14 @@ namespace Administracion_OMAJA
             }
 
             AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+            ActualizarEstadisticasRapidasContraloria();
         }
 
         private void CargarGuiasEnGrid(DataTable datos)
         {
             dataGridViewPrincipal.DataSource = datos;
             AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+            ActualizarEstadisticasRapidasContraloria();
         }
 
         private static DataTable OrdenarResultadoGuias(DataTable resultados)
@@ -654,6 +659,7 @@ namespace Administracion_OMAJA
         private void dataGridViewPrincipal_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             AplicarFormatoGeneralGrid(dataGridViewPrincipal);
+            ActualizarEstadisticasRapidasContraloria();
         }
 
         private void dataGridViewPrincipal_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -1233,6 +1239,634 @@ namespace Administracion_OMAJA
 
         private void exportarCorteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ExportarVistaActualCorteContraloria();
+        }
+
+        private void ActualizarEstadisticasRapidasContraloria()
+        {
+            DataTable vistaActualContraloria = ObtenerVistaActualDataGridViewContraloria(dataGridViewPrincipal);
+            DataTable estadisticasContraloria = ConstruirTablaEstadisticasRapidasContraloria(vistaActualContraloria);
+
+            dataGridViewEstadisticasRapidas.DataSource = estadisticasContraloria;
+            AplicarFormatoDataGridViewEstadisticasRapidasContraloria();
+        }
+
+        private DataTable ConstruirTablaEstadisticasRapidasContraloria(DataTable vistaActualContraloria)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("Indicador", typeof(string));
+            dt.Columns.Add("Cantidad", typeof(int));
+
+            dt.Rows.Add("Guías pagadas", ContarGuiasPorTipoCobroContraloria(vistaActualContraloria, "PAGADO"));
+            dt.Rows.Add("Guías por cobrar", ContarGuiasPorTipoCobroContraloria(vistaActualContraloria, "POR COBRAR"));
+            dt.Rows.Add("Guías canceladas", ContarGuiasCanceladasContraloria(vistaActualContraloria));
+            dt.Rows.Add("Guías completadas", ContarGuiasPorEstatusContraloria(vistaActualContraloria, "COMPLETADO"));
+            dt.Rows.Add("Guías entregadas", ContarGuiasPorEstatusContraloria(vistaActualContraloria, "ENTREGADA"));
+            dt.Rows.Add("Guías facturadas", ContarGuiasFacturadasContraloria(vistaActualContraloria));
+            dt.Rows.Add("Guías no facturadas", ContarGuiasNoFacturadasContraloria(vistaActualContraloria));
+
+            return dt;
+        }
+
+        private void AplicarFormatoDataGridViewEstadisticasRapidasContraloria()
+        {
+            if (dataGridViewEstadisticasRapidas == null)
+            {
+                return;
+            }
+
+            dataGridViewEstadisticasRapidas.ReadOnly = true;
+            dataGridViewEstadisticasRapidas.AllowUserToAddRows = false;
+            dataGridViewEstadisticasRapidas.AllowUserToDeleteRows = false;
+            dataGridViewEstadisticasRapidas.AllowUserToResizeRows = false;
+            dataGridViewEstadisticasRapidas.MultiSelect = false;
+            dataGridViewEstadisticasRapidas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewEstadisticasRapidas.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewEstadisticasRapidas.RowHeadersVisible = false;
+            dataGridViewEstadisticasRapidas.EnableHeadersVisualStyles = false;
+
+            dataGridViewEstadisticasRapidas.ColumnHeadersDefaultCellStyle.BackColor = Color.LightSteelBlue;
+            dataGridViewEstadisticasRapidas.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            dataGridViewEstadisticasRapidas.ColumnHeadersDefaultCellStyle.Font = new Font(dataGridViewEstadisticasRapidas.Font, FontStyle.Bold);
+
+            dataGridViewEstadisticasRapidas.DefaultCellStyle.BackColor = Color.AliceBlue;
+            dataGridViewEstadisticasRapidas.DefaultCellStyle.ForeColor = Color.Black;
+            dataGridViewEstadisticasRapidas.DefaultCellStyle.SelectionBackColor = Color.LightSalmon;
+            dataGridViewEstadisticasRapidas.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dataGridViewEstadisticasRapidas.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
+
+            if (dataGridViewEstadisticasRapidas.Columns.Contains("Indicador"))
+            {
+                dataGridViewEstadisticasRapidas.Columns["Indicador"].HeaderText = "Indicador";
+                dataGridViewEstadisticasRapidas.Columns["Indicador"].FillWeight = 75;
+            }
+
+            if (dataGridViewEstadisticasRapidas.Columns.Contains("Cantidad"))
+            {
+                dataGridViewEstadisticasRapidas.Columns["Cantidad"].HeaderText = "Cantidad";
+                dataGridViewEstadisticasRapidas.Columns["Cantidad"].FillWeight = 25;
+                dataGridViewEstadisticasRapidas.Columns["Cantidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+        }
+
+        private void ExportarVistaActualCorteContraloria()
+        {
+            DataTable vistaCortesContraloria = ObtenerVistaActualDataGridViewContraloria(dataGridViewContraloria);
+            DataTable vistaGuiasContraloria = ObtenerVistaActualDataGridViewContraloria(dataGridViewPrincipal);
+
+            if ((vistaCortesContraloria == null || vistaCortesContraloria.Rows.Count == 0) &&
+                (vistaGuiasContraloria == null || vistaGuiasContraloria.Rows.Count == 0))
+            {
+                MessageBox.Show(
+                    "No hay información visible para exportar.",
+                    "Exportar corte",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.Filter = "Archivo Excel|*.xlsx";
+                dialog.Title = "Exportar reporte de cortes";
+                dialog.FileName = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Reporte_Cortes_OMAJA_{0:yyyyMMdd_HHmm}.xlsx",
+                    DateTime.Now);
+
+                if (dialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                try
+                {
+                    using (var workbook = new XLWorkbook())
+                    {
+                        var hojaResumenContraloria = workbook.Worksheets.Add("Resumen");
+                        EscribirResumenExportacionContraloria(
+                            hojaResumenContraloria,
+                            vistaCortesContraloria,
+                            vistaGuiasContraloria);
+
+                        var hojaCortesContraloria = workbook.Worksheets.Add("Cortes");
+                        ExportarDataTableExcelContraloria(
+                            hojaCortesContraloria,
+                            vistaCortesContraloria,
+                            true);
+
+                        var hojaGuiasContraloria = workbook.Worksheets.Add("Guias");
+                        ExportarDataTableExcelContraloria(
+                            hojaGuiasContraloria,
+                            vistaGuiasContraloria,
+                            false);
+
+                        workbook.SaveAs(dialog.FileName);
+                    }
+
+                    MostrarMensajeExportacionCompletadaContraloria(dialog.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        "No se pudo exportar el reporte de cortes.\n" + ex.Message,
+                        "Exportar corte",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void MostrarMensajeExportacionCompletadaContraloria(string filePath)
+        {
+            var resultado = MessageBox.Show(
+                "Exportación completada correctamente.\n¿Deseas abrir el archivo?",
+                "Exportación completada",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information);
+
+            if (resultado != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                System.Diagnostics.Process.Start(filePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "No se pudo abrir el archivo exportado.\n" + ex.Message,
+                    "Abrir archivo",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private DataTable ObtenerVistaActualDataGridViewContraloria(DataGridView dgv)
+        {
+            var dt = new DataTable();
+
+            if (dgv == null || dgv.Columns.Count == 0)
+            {
+                return dt;
+            }
+
+            var columnas = dgv.Columns
+                .Cast<DataGridViewColumn>()
+                .Where(c => c.Visible)
+                .OrderBy(c => c.DisplayIndex)
+                .ToList();
+
+            foreach (var col in columnas)
+            {
+                string nombreColumna = string.IsNullOrWhiteSpace(col.HeaderText)
+                    ? col.Name
+                    : col.HeaderText.Trim();
+
+                if (dt.Columns.Contains(nombreColumna))
+                {
+                    nombreColumna = nombreColumna + "_" + col.Index.ToString(CultureInfo.InvariantCulture);
+                }
+
+                dt.Columns.Add(nombreColumna, typeof(string));
+            }
+
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row == null || row.IsNewRow || !row.Visible)
+                {
+                    continue;
+                }
+
+                var nuevaFila = dt.NewRow();
+
+                for (int i = 0; i < columnas.Count; i++)
+                {
+                    object valor = row.Cells[columnas[i].Name]?.Value;
+                    nuevaFila[i] = valor == null ? string.Empty : Convert.ToString(valor, CultureInfo.CurrentCulture);
+                }
+
+                dt.Rows.Add(nuevaFila);
+            }
+
+            return dt;
+        }
+
+        private void ExportarDataTableExcelContraloria(IXLWorksheet ws, DataTable dt, bool esHojaCortesContraloria)
+        {
+            if (ws == null)
+            {
+                return;
+            }
+
+            if (dt == null || dt.Columns.Count == 0)
+            {
+                ws.Cell(1, 1).Value = "Sin datos";
+                return;
+            }
+
+            var tabla = ws.Cell(1, 1).InsertTable(dt, "Tabla" + ws.Name.Replace(" ", string.Empty));
+            tabla.Theme = XLTableTheme.None;
+            tabla.ShowAutoFilter = true;
+            tabla.ShowRowStripes = false;
+            tabla.ShowColumnStripes = false;
+
+            var encabezado = ws.Range(1, 1, 1, dt.Columns.Count);
+            encabezado.Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+            encabezado.Style.Font.Bold = true;
+            encabezado.Style.Font.FontColor = XLColor.Black;
+
+            if (esHojaCortesContraloria)
+            {
+                AplicarColoresFilasExcelCortesContraloria(ws, dt, 2, 1);
+                AplicarFormatoMonedaExcelContraloria(
+                    ws,
+                    dt,
+                    "Nota de Débito",
+                    "Descuento",
+                    "Sub Total",
+                    "IVA",
+                    "Retención",
+                    "Total");
+            }
+            else
+            {
+                AplicarColoresFilasExcelGuiasContraloria(ws, dt, 2, 1);
+                AplicarFormatoMonedaExcelContraloria(
+                    ws,
+                    dt,
+                    "Subtotal",
+                    "Total",
+                    "Valor Declarado");
+            }
+
+            ws.Columns().AdjustToContents();
+            ws.SheetView.FreezeRows(1);
+        }
+
+        private void EscribirResumenExportacionContraloria(
+            IXLWorksheet ws,
+            DataTable vistaCortesContraloria,
+            DataTable vistaGuiasContraloria)
+        {
+            ws.Range("A1:H1").Merge();
+            ws.Cell("A1").Value = "REPORTE DE CORTES OMAJA";
+            ws.Cell("A1").Style.Font.Bold = true;
+            ws.Cell("A1").Style.Font.FontSize = 18;
+            ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell("A1").Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+
+            ws.Range("A2:H2").Merge();
+            ws.Cell("A2").Value = "Guias facturadas completadas y pendientes";
+            ws.Cell("A2").Style.Font.Bold = true;
+            ws.Cell("A2").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell("A2").Style.Fill.BackgroundColor = XLColor.AliceBlue;
+
+            ws.Cell("A4").Value = "Fecha de exportación";
+            ws.Cell("B4").Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.CurrentCulture);
+
+            ws.Cell("A6").Value = "Indicador";
+            ws.Cell("B6").Value = "Valor";
+
+            var encabezado = ws.Range("A6:B6");
+            encabezado.Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+            encabezado.Style.Font.Bold = true;
+            encabezado.Style.Font.FontColor = XLColor.Black;
+
+            int fila = 7;
+
+            EscribirFilaResumenContraloria(ws, fila++, "Total cortes visibles", vistaCortesContraloria == null ? 0 : vistaCortesContraloria.Rows.Count);
+            EscribirFilaResumenContraloria(ws, fila++, "Total guías visibles", vistaGuiasContraloria == null ? 0 : vistaGuiasContraloria.Rows.Count);
+            EscribirFilaResumenContraloria(ws, fila++, "Guías pagadas", ContarGuiasPorTipoCobroContraloria(vistaGuiasContraloria, "PAGADO"));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías por cobrar", ContarGuiasPorTipoCobroContraloria(vistaGuiasContraloria, "POR COBRAR"));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías con descuento", ContarCortesConDescuentoContraloria(vistaCortesContraloria));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías facturadas", ContarGuiasFacturadasContraloria(vistaGuiasContraloria));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías no facturadas", ContarGuiasNoFacturadasContraloria(vistaGuiasContraloria));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías canceladas", ContarGuiasCanceladasContraloria(vistaGuiasContraloria));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías completadas", ContarGuiasPorEstatusContraloria(vistaGuiasContraloria, "COMPLETADO"));
+            EscribirFilaResumenContraloria(ws, fila++, "Guías entregadas", ContarGuiasPorEstatusContraloria(vistaGuiasContraloria, "ENTREGADA"));
+
+            ws.Columns("A:B").AdjustToContents();
+        }
+
+        private void EscribirFilaResumenContraloria(IXLWorksheet ws, int fila, string etiqueta, object valor)
+        {
+            ws.Cell(fila, 1).Value = etiqueta ?? string.Empty;
+
+            if (valor == null)
+            {
+                ws.Cell(fila, 2).Value = string.Empty;
+            }
+            else if (valor is int)
+            {
+                ws.Cell(fila, 2).Value = (int)valor;
+            }
+            else if (valor is long)
+            {
+                ws.Cell(fila, 2).Value = (long)valor;
+            }
+            else if (valor is decimal)
+            {
+                ws.Cell(fila, 2).Value = (decimal)valor;
+            }
+            else if (valor is double)
+            {
+                ws.Cell(fila, 2).Value = (double)valor;
+            }
+            else if (valor is float)
+            {
+                ws.Cell(fila, 2).Value = (float)valor;
+            }
+            else if (valor is bool)
+            {
+                ws.Cell(fila, 2).Value = (bool)valor;
+            }
+            else if (valor is DateTime)
+            {
+                ws.Cell(fila, 2).Value = (DateTime)valor;
+            }
+            else
+            {
+                ws.Cell(fila, 2).Value = Convert.ToString(valor, CultureInfo.CurrentCulture) ?? string.Empty;
+            }
+
+            var rango = ws.Range(fila, 1, fila, 2);
+            rango.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            rango.Style.Border.BottomBorderColor = XLColor.LightGray;
+        }
+
+        private string ObtenerNombreColumnaContraloria(DataTable dt, params string[] nombresPosibles)
+        {
+            if (dt == null || dt.Columns.Count == 0 || nombresPosibles == null || nombresPosibles.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (string nombre in nombresPosibles)
+            {
+                var columna = dt.Columns.Cast<DataColumn>()
+                    .FirstOrDefault(c => c.ColumnName.Equals(nombre, StringComparison.OrdinalIgnoreCase));
+
+                if (columna != null)
+                {
+                    return columna.ColumnName;
+                }
+            }
+
+            return null;
+        }
+
+        private void AplicarFormatoMonedaExcelContraloria(IXLWorksheet ws, DataTable dt, params string[] nombresColumnas)
+        {
+            if (ws == null || dt == null || nombresColumnas == null)
+            {
+                return;
+            }
+
+            foreach (string nombre in nombresColumnas)
+            {
+                string columna = ObtenerNombreColumnaContraloria(dt, nombre);
+                if (string.IsNullOrWhiteSpace(columna))
+                {
+                    continue;
+                }
+
+                int numeroColumna = dt.Columns[columna].Ordinal + 1;
+                ws.Column(numeroColumna).Style.NumberFormat.Format = "$#,##0.00";
+                ws.Column(numeroColumna).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+            }
+        }
+
+        private void AplicarColoresFilasExcelGuiasContraloria(IXLWorksheet ws, DataTable dt, int startRow, int startCol)
+        {
+            if (ws == null || dt == null || dt.Rows.Count == 0)
+            {
+                return;
+            }
+
+            string colEstatus = ObtenerNombreColumnaContraloria(dt, "Estatus Guía", "Estatus Guia", "EstatusGuia");
+            string colTipoCobro = ObtenerNombreColumnaContraloria(dt, "Tipo Cobro", "TipoCobro");
+            string colFactura = ObtenerNombreColumnaContraloria(dt, "Factura");
+            string colFolio = ObtenerNombreColumnaContraloria(dt, "Folio Guía", "Folio Guia", "FolioGuia", "folio_guia");
+
+            int idxEstatus = colEstatus != null ? dt.Columns[colEstatus].Ordinal : -1;
+            int idxTipoCobro = colTipoCobro != null ? dt.Columns[colTipoCobro].Ordinal : -1;
+            int idxFactura = colFactura != null ? dt.Columns[colFactura].Ordinal : -1;
+            int idxFolio = colFolio != null ? dt.Columns[colFolio].Ordinal : -1;
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                DataRow row = dt.Rows[i];
+                int filaExcel = startRow + i;
+
+                Color colorBase = (i % 2 == 0) ? Color.AliceBlue : Color.White;
+                var rangoFila = ws.Range(filaExcel, startCol, filaExcel, startCol + dt.Columns.Count - 1);
+                rangoFila.Style.Fill.BackgroundColor = XLColor.FromColor(colorBase);
+                rangoFila.Style.Font.FontColor = XLColor.Black;
+
+                if (idxEstatus >= 0)
+                {
+                    string estatus = Convert.ToString(row[idxEstatus] ?? string.Empty).Trim();
+                    Color colorEstatus;
+                    if (!string.IsNullOrWhiteSpace(estatus) &&
+                        coloresEstatus.TryGetValue(estatus.ToUpperInvariant(), out colorEstatus))
+                    {
+                        rangoFila.Style.Fill.BackgroundColor = XLColor.FromColor(colorEstatus);
+                    }
+                }
+
+                if (idxTipoCobro >= 0)
+                {
+                    string tipoCobro = Convert.ToString(row[idxTipoCobro] ?? string.Empty).Trim();
+                    Color colorTipoCobroExcel;
+                    if (!string.IsNullOrWhiteSpace(tipoCobro) &&
+                        coloresTipoCobro.TryGetValue(tipoCobro.ToUpperInvariant(), out colorTipoCobroExcel))
+                    {
+                        ws.Cell(filaExcel, startCol + idxTipoCobro).Style.Fill.BackgroundColor = XLColor.FromColor(colorTipoCobroExcel);
+                    }
+                }
+
+                if (idxFactura >= 0)
+                {
+                    string factura = Convert.ToString(row[idxFactura] ?? string.Empty).Trim();
+                    if (!string.IsNullOrWhiteSpace(factura))
+                    {
+                        ws.Cell(filaExcel, startCol + idxFactura).Style.Fill.BackgroundColor = XLColor.FromColor(colorFacturaConValor);
+
+                        if (idxFolio >= 0)
+                        {
+                            ws.Cell(filaExcel, startCol + idxFolio).Style.Fill.BackgroundColor = XLColor.FromColor(colorFacturaConValor);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void AplicarColoresFilasExcelCortesContraloria(IXLWorksheet ws, DataTable dt, int startRow, int startCol)
+        {
+            if (ws == null || dt == null || dt.Rows.Count == 0)
+            {
+                return;
+            }
+
+            string colEstatus = ObtenerNombreColumnaContraloria(
+                dt,
+                "Estatus guías en cortes",
+                "Estatus guias en cortes",
+                "Estatus");
+            string colDescuento = ObtenerNombreColumnaContraloria(dt, "Descuento", "descuento");
+
+            int idxEstatus = colEstatus != null ? dt.Columns[colEstatus].Ordinal : -1;
+            int idxDescuento = colDescuento != null ? dt.Columns[colDescuento].Ordinal : -1;
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                DataRow row = dt.Rows[i];
+                int filaExcel = startRow + i;
+
+                Color colorBase = (i % 2 == 0) ? Color.AliceBlue : Color.White;
+                var rangoFila = ws.Range(filaExcel, startCol, filaExcel, startCol + dt.Columns.Count - 1);
+                rangoFila.Style.Fill.BackgroundColor = XLColor.FromColor(colorBase);
+                rangoFila.Style.Font.FontColor = XLColor.Black;
+
+                if (idxEstatus >= 0)
+                {
+                    string estatus = Convert.ToString(row[idxEstatus] ?? string.Empty).Trim();
+                    Color colorEstatus;
+                    if (!string.IsNullOrWhiteSpace(estatus) &&
+                        coloresEstatus.TryGetValue(estatus.ToUpperInvariant(), out colorEstatus))
+                    {
+                        rangoFila.Style.Fill.BackgroundColor = XLColor.FromColor(colorEstatus);
+                    }
+                }
+
+                if (idxDescuento >= 0)
+                {
+                    decimal descuento;
+                    if (decimal.TryParse(Convert.ToString(row[idxDescuento] ?? string.Empty), NumberStyles.Any, CultureInfo.CurrentCulture, out descuento) ||
+                        decimal.TryParse(Convert.ToString(row[idxDescuento] ?? string.Empty), NumberStyles.Any, CultureInfo.InvariantCulture, out descuento))
+                    {
+                        if (descuento > 0m)
+                        {
+                            ws.Cell(filaExcel, startCol + idxDescuento).Style.Fill.BackgroundColor = XLColor.FromColor(colorDescuentoContraloria);
+                        }
+                    }
+                }
+            }
+        }
+
+        private int ContarGuiasPorTipoCobroContraloria(DataTable dt, string tipoCobroBuscado)
+        {
+            if (dt == null || dt.Rows.Count == 0 || string.IsNullOrWhiteSpace(tipoCobroBuscado))
+            {
+                return 0;
+            }
+
+            string colTipoCobro = ObtenerNombreColumnaContraloria(dt, "Tipo Cobro", "TipoCobro");
+            if (string.IsNullOrWhiteSpace(colTipoCobro))
+            {
+                return 0;
+            }
+
+            return dt.AsEnumerable().Count(r =>
+                string.Equals(
+                    Convert.ToString(r[colTipoCobro] ?? string.Empty).Trim(),
+                    tipoCobroBuscado,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private int ContarGuiasFacturadasContraloria(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return 0;
+            }
+
+            string colFactura = ObtenerNombreColumnaContraloria(dt, "Factura");
+            if (string.IsNullOrWhiteSpace(colFactura))
+            {
+                return 0;
+            }
+
+            return dt.AsEnumerable().Count(r =>
+                !string.IsNullOrWhiteSpace(Convert.ToString(r[colFactura] ?? string.Empty).Trim()));
+        }
+
+        private int ContarGuiasNoFacturadasContraloria(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return 0;
+            }
+
+            string colFactura = ObtenerNombreColumnaContraloria(dt, "Factura");
+            if (string.IsNullOrWhiteSpace(colFactura))
+            {
+                return 0;
+            }
+
+            return dt.AsEnumerable().Count(r =>
+                string.IsNullOrWhiteSpace(Convert.ToString(r[colFactura] ?? string.Empty).Trim()));
+        }
+
+        private int ContarGuiasCanceladasContraloria(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return 0;
+            }
+
+            string colEstatus = ObtenerNombreColumnaContraloria(dt, "Estatus Guía", "Estatus Guia", "EstatusGuia");
+            string colTipoCobro = ObtenerNombreColumnaContraloria(dt, "Tipo Cobro", "TipoCobro");
+
+            return dt.AsEnumerable().Count(r =>
+                string.Equals(Convert.ToString(colEstatus == null ? string.Empty : r[colEstatus]).Trim(), "CANCELADO", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Convert.ToString(colTipoCobro == null ? string.Empty : r[colTipoCobro]).Trim(), "CANCELADO", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private int ContarGuiasPorEstatusContraloria(DataTable dt, string estatusBuscado)
+        {
+            if (dt == null || dt.Rows.Count == 0 || string.IsNullOrWhiteSpace(estatusBuscado))
+            {
+                return 0;
+            }
+
+            string colEstatus = ObtenerNombreColumnaContraloria(dt, "Estatus Guía", "Estatus Guia", "EstatusGuia");
+            if (string.IsNullOrWhiteSpace(colEstatus))
+            {
+                return 0;
+            }
+
+            return dt.AsEnumerable().Count(r =>
+                string.Equals(
+                    Convert.ToString(r[colEstatus] ?? string.Empty).Trim(),
+                    estatusBuscado,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private int ContarCortesConDescuentoContraloria(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return 0;
+            }
+
+            string colDescuento = ObtenerNombreColumnaContraloria(dt, "Descuento", "descuento");
+            if (string.IsNullOrWhiteSpace(colDescuento))
+            {
+                return 0;
+            }
+
+            return dt.AsEnumerable().Count(r =>
+            {
+                decimal descuento;
+                return decimal.TryParse(Convert.ToString(r[colDescuento] ?? string.Empty), NumberStyles.Any, CultureInfo.CurrentCulture, out descuento) ||
+                       decimal.TryParse(Convert.ToString(r[colDescuento] ?? string.Empty), NumberStyles.Any, CultureInfo.InvariantCulture, out descuento)
+                    ? descuento > 0m
+                    : false;
+            });
         }
 
         private void InicializarFiltros()
@@ -1348,6 +1982,7 @@ namespace Administracion_OMAJA
 
                     dataGridViewContraloria.DataSource = null;
                     dataGridViewPrincipal.DataSource = null;
+                    ActualizarEstadisticasRapidasContraloria();
 
                     MessageBox.Show(
                         "Todos los registros de facturación fueron eliminados y la persistencia local fue reiniciada.",
@@ -1422,6 +2057,7 @@ namespace Administracion_OMAJA
             if (datos == null || datos.Rows.Count == 0)
             {
                 dataGridViewPrincipal.DataSource = null;
+                ActualizarEstadisticasRapidasContraloria();
 
                 if (mostrarMensajeSinResultados)
                 {
@@ -2141,6 +2777,7 @@ namespace Administracion_OMAJA
             if (folios.Count == 0)
             {
                 dataGridViewPrincipal.DataSource = null;
+                ActualizarEstadisticasRapidasContraloria();
                 return;
             }
 
@@ -2149,6 +2786,7 @@ namespace Administracion_OMAJA
             if (datos == null || datos.Rows.Count == 0)
             {
                 dataGridViewPrincipal.DataSource = null;
+                ActualizarEstadisticasRapidasContraloria();
                 return;
             }
 

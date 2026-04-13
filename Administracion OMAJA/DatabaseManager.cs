@@ -2624,17 +2624,3 @@ internal sealed class ClienteEstadisticas
     public List<(string Destino, int TotalCajas)> Destinos { get; } = new List<(string Destino, int TotalCajas)>();
 }
 
-internal class Contraloria
-{
-    private readonly string _connectionString = "Server=localhost;Database=adminomaja;Uid=root;Pwd=omaja123;Port=3306;";
-
-    private readonly Dictionary<int, string> overridesBusquedaEnCortesContraloria = new Dictionary<int, string>();
-    private readonly Dictionary<int, string> overridesObservacionesAuditoriaContraloria = new Dictionary<int, string>();
-
-    private readonly string rutaEstadoLocalContraloria = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Administracion_OMAJA",
-        "contraloria.estado.local.json");
-
-    // Otros métodos y propiedades de la clase Contraloria
-}
